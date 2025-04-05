@@ -237,7 +237,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
           onPress={handleAddRecord}
           containerStyle={styles.submitButtonContainer}
           buttonStyle={styles.submitButton}
-          titleStyle={styles.buttonText}
+          titleStyle={styles.submitButtonText}
         />
       </View>
     </ScrollView>
@@ -274,6 +274,8 @@ const styles = StyleSheet.create({
   selectedButtonText: {
     ...typography.button,
     color: "white",
+    fontSize: 16,
+    textAlign: "center",
   },
   inputContainer: {
     borderBottomWidth: 0,
@@ -338,13 +340,14 @@ const styles = StyleSheet.create({
   },
   reactionButton: {
     width: "48%",
-    marginBottom: 10,
+    marginBottom: 12,
     borderRadius: 12,
   },
   selectedReactionButton: {
     backgroundColor: customColors.buttonPrimary,
     paddingVertical: 12,
-    height: 45,
+    paddingHorizontal: 24,
+    height: 48,
     borderRadius: 12,
   },
   outlineButton: {
@@ -352,12 +355,15 @@ const styles = StyleSheet.create({
     borderColor: customColors.border,
     borderWidth: 1,
     paddingVertical: 12,
-    height: 45,
+    paddingHorizontal: 24,
+    height: 48,
     borderRadius: 12,
   },
   outlineButtonText: {
     ...typography.button,
     color: customColors.text,
+    fontSize: 16,
+    textAlign: "center",
   },
   severityGroup: {
     marginBottom: 20,
@@ -372,5 +378,10 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: customColors.buttonPrimary,
     paddingVertical: 12,
+  },
+  submitButtonText: {
+    ...typography.button,
+    color: "white",
+    fontSize: 17,
   },
 });
