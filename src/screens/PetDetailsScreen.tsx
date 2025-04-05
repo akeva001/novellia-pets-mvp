@@ -107,13 +107,6 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
             </>
           )}
         </View>
-        <Button
-          title="Remove Record"
-          onPress={() => handleDeleteRecord(item.id)}
-          buttonStyle={styles.deleteRecordButton}
-          containerStyle={styles.deleteButtonContainer}
-          titleStyle={styles.deleteButtonText}
-        />
       </View>
     </TouchableOpacity>
   );
@@ -298,7 +291,6 @@ const styles = StyleSheet.create({
   },
   recordDetails: {
     gap: 8,
-    marginBottom: 16,
   },
   recordText: {
     ...typography.body1,
