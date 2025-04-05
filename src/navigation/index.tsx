@@ -1,11 +1,10 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useAppSelector } from "../store";
-import { RootStackParamList, TabParamList } from "../types/navigation";
+import { RootStackParamList } from "../types/navigation";
 
-// Import screens (we'll create these next)
+// Import screens
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -14,16 +13,6 @@ import PetDetailsScreen from "../screens/PetDetailsScreen";
 import AddRecordScreen from "../screens/AddRecordScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<TabParamList>();
-
-const MainTabs = () => {
-  return (
-    <Tab.Navigator>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Add Pet" component={AddPetScreen} />
-    </Tab.Navigator>
-  );
-};
 
 export const Navigation = () => {
   const currentUser = useAppSelector((state) => state.user.currentUser);
@@ -40,11 +29,8 @@ export const Navigation = () => {
         ) : (
           // Main App Stack
           <>
-            <Stack.Screen
-              name="MainTabs"
-              component={MainTabs}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="Dashboard" component={DashboardScreen} />
+            <Stack.Screen name="AddPet" component={AddPetScreen} />
             <Stack.Screen name="PetDetails" component={PetDetailsScreen} />
             <Stack.Screen name="AddRecord" component={AddRecordScreen} />
           </>

@@ -4,18 +4,10 @@ import { Button, Text, FAB, Card } from "@rneui/themed";
 import { useAppSelector, useAppDispatch } from "../store";
 import { deletePet } from "../store/petsSlice";
 import { Pet } from "../types";
-import { CompositeScreenProps } from "@react-navigation/native";
-import {
-  TabScreenProps,
-  RootStackScreenProps,
-  RootStackParamList,
-} from "../types/navigation";
+import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 
-type Props = CompositeScreenProps<
-  TabScreenProps<"Dashboard">,
-  RootStackScreenProps<keyof RootStackParamList>
->;
+type Props = RootStackScreenProps<"Dashboard">;
 
 export default function DashboardScreen({ navigation }: Props) {
   const pets = useAppSelector((state) => state.pets.pets);
@@ -68,7 +60,7 @@ export default function DashboardScreen({ navigation }: Props) {
         icon={{ name: "add", color: "white" }}
         placement="right"
         color={customColors.buttonPrimary}
-        onPress={() => navigation.navigate("Add Pet")}
+        onPress={() => navigation.navigate("AddPet")}
       />
     </View>
   );

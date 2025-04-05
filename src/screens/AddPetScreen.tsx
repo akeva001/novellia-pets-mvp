@@ -3,19 +3,11 @@ import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Input, Button } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
 import { addPet } from "../store/petsSlice";
-import { CompositeScreenProps } from "@react-navigation/native";
-import {
-  TabScreenProps,
-  RootStackScreenProps,
-  RootStackParamList,
-} from "../types/navigation";
+import { RootStackScreenProps } from "../types/navigation";
 import { AnimalType } from "../types";
 import { commonStyles, customColors } from "../theme";
 
-type Props = CompositeScreenProps<
-  TabScreenProps<"Add Pet">,
-  RootStackScreenProps<keyof RootStackParamList>
->;
+type Props = RootStackScreenProps<"AddPet">;
 
 export default function AddPetScreen({ navigation }: Props) {
   const dispatch = useAppDispatch();
@@ -123,6 +115,8 @@ const styles = StyleSheet.create({
   label: {
     color: customColors.primary,
     marginBottom: 5,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   buttonContainer: {
     marginVertical: 20,
