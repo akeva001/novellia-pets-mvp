@@ -74,7 +74,12 @@ export default function DashboardScreen({ navigation }: Props) {
         }}
         placement="right"
         color={customColors.buttonPrimary}
-        onPress={() => navigation.navigate("AddPet")}
+        onPress={() =>
+          navigation.navigate({
+            name: "AddPet",
+            params: {},
+          })
+        }
         style={styles.fab}
         size="large"
       />
