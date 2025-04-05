@@ -12,6 +12,7 @@ import DashboardScreen from "../screens/DashboardScreen";
 import AddPetScreen from "../screens/AddPetScreen";
 import PetDetailsScreen from "../screens/PetDetailsScreen";
 import AddRecordScreen from "../screens/AddRecordScreen";
+import EditRecordScreen from "../screens/EditRecordScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -19,11 +20,13 @@ const screenOptions = {
   headerShown: true,
   header: ({ route, back }: any) => {
     let title = route.name;
+    let showSignOut = false;
 
     // Custom titles for specific routes
     switch (route.name) {
       case "Dashboard":
         title = "Dashboard";
+        showSignOut = true; // Enable sign-out button for Dashboard
         break;
       case "AddPet":
         title = "Add Pet";
@@ -31,12 +34,21 @@ const screenOptions = {
       case "AddRecord":
         title = "Add Record";
         break;
+      case "EditRecord":
+        title = "Edit Record";
+        break;
       case "PetDetails":
-        title = route.params?.pet.name || "Pet Details";
+        title = `${route.params?.pet.name}'s Profile`;
         break;
     }
 
-    return <CustomHeader title={title} showBack={back !== undefined} />;
+    return (
+      <CustomHeader
+        title={title}
+        showBack={back !== undefined}
+        showSignOut={showSignOut}
+      />
+    );
   },
 };
 
@@ -67,6 +79,7 @@ export const Navigation = () => {
             <Stack.Screen name="AddPet" component={AddPetScreen} />
             <Stack.Screen name="PetDetails" component={PetDetailsScreen} />
             <Stack.Screen name="AddRecord" component={AddRecordScreen} />
+            <Stack.Screen name="EditRecord" component={EditRecordScreen} />
           </>
         )}
       </Stack.Navigator>

@@ -12,7 +12,7 @@ import {
   AllergySeverity,
   RecordType,
 } from "../types";
-import { commonStyles, customColors } from "../theme";
+import { commonStyles, customColors, typography } from "../theme";
 
 type Props = RootStackScreenProps<"AddRecord">;
 
@@ -64,14 +64,15 @@ export default function AddRecordScreen({ route, navigation }: Props) {
         break;
 
       case "lab":
-        if (!dosage || !instructions) {
-          alert("Please enter both dosage and instructions");
+        if (!dosage || !instructions || !dateAdministered) {
+          alert("Please enter dosage, instructions, and administration date");
           return;
         }
         newRecord = {
           id: Date.now().toString(),
           petId,
           name,
+          dateAdministered,
           dosage,
           instructions,
         };
@@ -115,6 +116,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
+          placeholderTextColor={customColors.secondaryText}
         />
 
         {recordType === "vaccine" && (
@@ -126,12 +128,13 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             inputStyle={styles.inputText}
             inputContainerStyle={styles.inputContainer}
             labelStyle={styles.label}
+            placeholderTextColor={customColors.secondaryText}
           />
         )}
 
         {recordType === "allergy" && (
           <>
-            <Text style={styles.label}>Reactions</Text>
+            <Text style={[styles.label, { marginLeft: 10 }]}>Reactions</Text>
             <View style={styles.reactionsContainer}>
               {["rash", "swelling", "breathing", "other"].map((reaction) => (
                 <Button
@@ -176,6 +179,16 @@ export default function AddRecordScreen({ route, navigation }: Props) {
         {recordType === "lab" && (
           <>
             <Input
+              label="Date Administered"
+              value={dateAdministered}
+              onChangeText={setDateAdministered}
+              placeholder="YYYY-MM-DD"
+              inputStyle={styles.inputText}
+              inputContainerStyle={styles.inputContainer}
+              labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
+            />
+            <Input
               label="Dosage"
               value={dosage}
               onChangeText={setDosage}
@@ -183,6 +196,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
               inputStyle={styles.inputText}
               inputContainerStyle={styles.inputContainer}
               labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
             />
             <Input
               label="Instructions"
@@ -194,6 +208,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
               inputStyle={styles.inputText}
               inputContainerStyle={styles.inputContainer}
               labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
             />
           </>
         )}
@@ -214,6 +229,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   title: {
+    ...typography.h2,
     color: customColors.primary,
     textAlign: "center",
     marginVertical: 20,
@@ -225,56 +241,63 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 8,
     borderColor: customColors.border,
+    marginHorizontal: 30,
   },
   selectedButton: {
     backgroundColor: customColors.buttonPrimary,
   },
   buttonText: {
+    ...typography.button,
     color: customColors.text,
-    fontSize: 14,
   },
   selectedButtonText: {
+    ...typography.button,
     color: "white",
-    fontSize: 14,
   },
   inputContainer: {
     borderBottomWidth: 0,
-    backgroundColor: customColors.surface,
+    backgroundColor: customColors.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 10,
     marginVertical: 5,
   },
   inputText: {
+    ...typography.body1,
     color: customColors.text,
   },
   label: {
+    ...typography.h3,
     color: customColors.primary,
     marginBottom: 5,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   reactionsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginBottom: 20,
+    marginHorizontal: 10,
   },
   reactionButton: {
     width: "48%",
     marginBottom: 10,
-    borderRadius: 8,
-    overflow: "hidden",
+    borderRadius: 12,
   },
   selectedReactionButton: {
     backgroundColor: customColors.buttonPrimary,
-    borderColor: customColors.buttonPrimary,
+    paddingVertical: 12,
+    height: 45,
+    borderRadius: 12,
   },
   outlineButton: {
-    backgroundColor: "transparent",
+    backgroundColor: "white",
     borderColor: customColors.border,
     borderWidth: 1,
+    paddingVertical: 12,
+    height: 45,
+    borderRadius: 12,
   },
   outlineButtonText: {
+    ...typography.button,
     color: customColors.text,
   },
   severityGroup: {

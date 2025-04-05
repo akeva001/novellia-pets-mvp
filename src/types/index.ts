@@ -48,3 +48,15 @@ export interface Lab {
 }
 
 export type MedicalRecord = Vaccine | Allergy | Lab;
+
+export const AnimalTypeLabels: Record<AnimalType, string> = {
+  dog: "Dog",
+  cat: "Cat",
+  bird: "Bird",
+};
+
+export const AnimalTypeIcons: Record<AnimalType, string> = {
+  dog: "cruelty-free",
+  cat: "pets",
+  bird: "air",
+};

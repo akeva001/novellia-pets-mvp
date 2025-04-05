@@ -1,9 +1,10 @@
 import React from "react";
 import { View, StyleSheet, FlatList, Animated } from "react-native";
-import { Button, Text, FAB, Card } from "@rneui/themed";
+import { Button, Text, FAB } from "@rneui/themed";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppSelector, useAppDispatch } from "../store";
 import { deletePet } from "../store/petsSlice";
-import { Pet } from "../types";
+import { Pet, AnimalTypeLabels } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,10 +19,14 @@ export default function DashboardScreen({ navigation }: Props) {
     dispatch(deletePet(petId));
   };
 
+  const renderListHeader = () => (
+    <Text style={styles.screenTitle}>My Pets</Text>
+  );
+
   const renderPet = ({ item: pet }: { item: Pet }) => (
     <Animated.View style={styles.cardContainer}>
       <LinearGradient
-        colors={["#d14f30", "#e85a39"]}
+        colors={["#e85a39", "#d14f30", "#ae3e23", "#842812"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cardGradient}
@@ -29,8 +34,32 @@ export default function DashboardScreen({ navigation }: Props) {
         <View style={styles.cardContent}>
           <Text style={styles.petName}>{pet.name}</Text>
           <View style={styles.petInfo}>
-            <Text style={styles.infoText}>Type: {pet.animalType}</Text>
-            <Text style={styles.infoText}>Breed: {pet.breed}</Text>
+            <View style={styles.infoRow}>
+              <FontAwesome5
+                name={
+                  pet.animalType === "dog"
+                    ? "dog"
+                    : pet.animalType === "cat"
+                    ? "cat"
+                    : "dove"
+                }
+                size={16}
+                color="white"
+                style={styles.infoIcon}
+              />
+              <Text style={styles.infoText}>
+                Type: {AnimalTypeLabels[pet.animalType]}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <FontAwesome5
+                name="id-card"
+                size={14}
+                color="white"
+                style={styles.infoIcon}
+              />
+              <Text style={styles.infoText}>Breed: {pet.breed}</Text>
+            </View>
           </View>
           <View style={styles.cardActions}>
             <Button
@@ -48,9 +77,14 @@ export default function DashboardScreen({ navigation }: Props) {
 
   return (
     <View style={[commonStyles.container, styles.container]}>
-      <Text style={styles.screenTitle}>My Pets</Text>
       {pets.length === 0 ? (
         <View style={styles.emptyState}>
+          <FontAwesome5
+            name="paw"
+            size={48}
+            color={customColors.secondaryText}
+            style={{ marginBottom: 16 }}
+          />
           <Text style={styles.emptyText}>No pets added yet</Text>
           <Text style={styles.emptySubtext}>
             Tap the + button to add your first pet
@@ -60,6 +94,7 @@ export default function DashboardScreen({ navigation }: Props) {
         <FlatList
           data={pets}
           renderItem={renderPet}
+          ListHeaderComponent={renderListHeader}
           keyExtractor={(pet) => pet.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -97,6 +132,7 @@ const styles = StyleSheet.create({
     color: customColors.primary,
     marginTop: 20,
     marginBottom: 24,
+    fontFamily: "PublicSans-ExtraBoldItalic",
   },
   cardContainer: {
     marginBottom: 16,
@@ -121,24 +157,34 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     color: "white",
-    marginBottom: 12,
+    marginBottom: 16,
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    fontFamily: "PublicSans-Bold",
   },
   petInfo: {
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoIcon: {
+    width: 24,
+    marginRight: 8,
+    opacity: 0.9,
   },
   infoText: {
     fontSize: 16,
     color: "white",
-    marginBottom: 4,
     opacity: 0.9,
+    fontFamily: "PublicSans-Regular",
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 8,
   },
   buttonContainer: {
     flex: 1,
@@ -154,6 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     color: "white",
+    fontFamily: "PublicSans-Bold",
   },
   list: {
     paddingTop: 8,
@@ -170,15 +217,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: customColors.text,
     marginBottom: 8,
+    fontFamily: "PublicSans-Bold",
   },
   emptySubtext: {
     fontSize: 16,
     color: customColors.secondaryText,
+    fontFamily: "PublicSans-Regular",
   },
   fab: {
     marginBottom: 25,
-    right: 10,
+    right: 16,
     bottom: 0,
     position: "absolute",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    borderColor: "#fff",
+    borderWidth: 1,
   },
 });

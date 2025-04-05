@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Pet } from "./index";
+import { Pet, MedicalRecord } from "./index";
 import { NavigatorScreenParams } from "@react-navigation/native";
 
 export type RootStackParamList = {
@@ -9,6 +9,7 @@ export type RootStackParamList = {
   AddPet: { pet?: Pet };
   PetDetails: { pet: Pet };
   AddRecord: { petId: string };
+  EditRecord: { record: MedicalRecord; petId: string };
   MainTabs: NavigatorScreenParams<TabParamList>;
 };
 

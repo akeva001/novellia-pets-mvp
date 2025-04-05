@@ -1,21 +1,47 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { Text, Icon } from "@rneui/themed";
 import { useNavigation } from "@react-navigation/native";
 import { customColors, commonStyles } from "../theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAppDispatch } from "../store";
+import { signOut } from "../store/userSlice";
 
 interface CustomHeaderProps {
   title: string;
   showBack?: boolean;
+  showSignOut?: boolean;
 }
 
 export default function CustomHeader({
   title,
   showBack = true,
+  showSignOut = false,
 }: CustomHeaderProps) {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Sign Out",
+          onPress: () => {
+            dispatch(signOut());
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <LinearGradient
@@ -29,8 +55,21 @@ export default function CustomHeader({
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Icon name="arrow-back-ios" size={24} color="white" />
+              <Icon
+                name="arrow-back-ios"
+                size={24}
+                color="white"
+                style={{ marginRight: 5 }}
+              />
               <Text style={styles.backText}>Back</Text>
+            </TouchableOpacity>
+          )}
+          {showSignOut && (
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={handleSignOut}
+            >
+              <Icon name="logout" type="material" size={24} color="white" />
             </TouchableOpacity>
           )}
           <Text style={styles.title}>{title}</Text>
@@ -58,10 +97,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     position: "absolute",
+    left: 13,
+    zIndex: 1,
+    height: 44,
+    justifyContent: "center",
+  },
+  signOutButton: {
+    position: "absolute",
     left: 16,
     zIndex: 1,
     height: 44,
     justifyContent: "center",
+    alignItems: "center",
   },
   backText: {
     color: "white",

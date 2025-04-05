@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Alert } from "react-native";
-import { Text, Input, Button } from "@rneui/themed";
+import { Text, Input, Button, Icon } from "@rneui/themed";
+import RNPickerSelect from "react-native-picker-select";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppDispatch, useAppSelector } from "../store";
 import { addPet, deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
-import { AnimalType } from "../types";
+import { AnimalType, AnimalTypeLabels } from "../types";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -24,6 +26,13 @@ export default function AddPetScreen({ navigation, route }: Props) {
     existingPet?.dateOfBirth
       ? new Date(existingPet.dateOfBirth).toISOString().split("T")[0]
       : ""
+  );
+
+  const animalTypeOptions = Object.entries(AnimalTypeLabels).map(
+    ([value, label]) => ({
+      label,
+      value,
+    })
   );
 
   const handleSubmit = () => {
@@ -86,16 +95,56 @@ export default function AddPetScreen({ navigation, route }: Props) {
           labelStyle={styles.label}
           placeholderTextColor={customColors.secondaryText}
         />
-        <Input
-          label="Animal Type"
-          value={animalType}
-          onChangeText={(value) => setAnimalType(value as AnimalType)}
-          placeholder="e.g., Dog, Cat, Bird"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
-        />
+
+        <Text style={[styles.label, { marginLeft: 10 }]}>Animal Type</Text>
+        <View style={styles.pickerContainer}>
+          <RNPickerSelect
+            onValueChange={(value) => {
+              if (value) setAnimalType(value as AnimalType);
+            }}
+            items={[
+              { label: "Dog", value: "dog" },
+              { label: "Cat", value: "cat" },
+              { label: "Bird", value: "bird" },
+            ]}
+            value={animalType}
+            useNativeAndroidPickerStyle={false}
+            placeholder={{
+              label: "Select an animal type",
+              value: undefined,
+              color: customColors.secondaryText,
+            }}
+            style={{
+              ...pickerSelectStyles,
+            }}
+            Icon={() => (
+              <Icon
+                name="arrow-drop-down"
+                type="material"
+                size={24}
+                color={customColors.text}
+              />
+            )}
+          />
+        </View>
+
+        {/* <View style={styles.selectedAnimalContainer}>
+          <FontAwesome5
+            name={
+              animalType === "dog"
+                ? "dog"
+                : animalType === "cat"
+                ? "cat"
+                : "dove"
+            }
+            size={24}
+            color={customColors.primary}
+          />
+          <Text style={styles.selectedAnimalText}>
+            Selected: {AnimalTypeLabels[animalType]}
+          </Text>
+        </View> */}
+
         <Input
           label="Breed"
           value={breed}
@@ -149,10 +198,59 @@ export default function AddPetScreen({ navigation, route }: Props) {
   );
 }
 
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: customColors.inputBackground,
+    borderRadius: 12,
+    color: customColors.text,
+    backgroundColor: customColors.inputBackground,
+    paddingRight: 30,
+    height: 48,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: customColors.inputBackground,
+    borderRadius: 12,
+    color: customColors.text,
+    backgroundColor: customColors.inputBackground,
+    paddingRight: 30,
+    height: 48,
+  },
+  placeholder: {
+    color: customColors.secondaryText,
+  },
+  iconContainer: {
+    top: 12,
+    right: 12,
+    height: 24,
+    width: 24,
+  },
+  viewContainer: {
+    marginBottom: 16,
+    backgroundColor: customColors.inputBackground,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+});
+
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     backgroundColor: "#fff",
+  },
+  pickerContainer: {
+    marginHorizontal: 10,
   },
   screenTitle: {
     fontSize: 34,
@@ -190,6 +288,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 17,
     fontWeight: "600",
+  },
+  selectedAnimalContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 8,
+    marginLeft: 5,
+  },
+  selectedAnimalText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: customColors.text,
   },
   submitButtonGradient: {
     borderRadius: 12,

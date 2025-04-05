@@ -104,35 +104,55 @@ export const commonStyles = {
 export const typography = {
   h1: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontFamily: "PublicSans-ExtraBoldItalic",
     letterSpacing: -1,
     color: customColors.text,
   },
   h2: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "PublicSans-Bold",
     letterSpacing: -0.5,
     color: customColors.text,
   },
   h3: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontFamily: "PublicSans-Bold",
     letterSpacing: -0.25,
     color: customColors.text,
   },
   body1: {
     fontSize: 16,
+    fontFamily: "PublicSans-Regular",
     color: customColors.text,
     lineHeight: 24,
   },
   body2: {
     fontSize: 14,
+    fontFamily: "PublicSans-Regular",
     color: customColors.secondaryText,
     lineHeight: 20,
   },
   caption: {
     fontSize: 12,
+    fontFamily: "PublicSans-Regular",
     color: customColors.secondaryText,
     lineHeight: 16,
+  },
+  button: {
+    fontSize: 17,
+    fontFamily: "PublicSans-Bold",
+    color: customColors.text,
+  },
+  title: {
+    fontSize: 34,
+    fontFamily: "PublicSans-ExtraBoldItalic",
+    color: customColors.text,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 20,
+    fontFamily: "PublicSans-Medium",
+    color: customColors.secondaryText,
+    letterSpacing: -0.25,
   },
 };
