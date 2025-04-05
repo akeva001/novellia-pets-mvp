@@ -23,7 +23,7 @@ const screenOptions = {
     // Custom titles for specific routes
     switch (route.name) {
       case "Dashboard":
-        title = "My Pets";
+        title = "Dashboard";
         break;
       case "AddPet":
         title = "Add Pet";
