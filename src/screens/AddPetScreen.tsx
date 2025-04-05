@@ -34,7 +34,7 @@ export default function AddPetScreen({ navigation }: Props) {
       })
     );
 
-    navigation.navigate("Dashboard");
+    navigation.goBack();
   };
 
   return (
