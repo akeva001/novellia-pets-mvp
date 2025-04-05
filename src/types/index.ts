@@ -1,6 +1,13 @@
-export type AnimalType = 'dog' | 'cat' | 'bird';
-export type AllergySeverity = 'mild' | 'severe';
-export type AllergyReaction = 'hives' | 'rash' | 'swelling' | 'vomiting' | 'diarrhea';
+export type AnimalType = "dog" | "cat" | "bird";
+export type AllergySeverity = "mild" | "severe";
+export type AllergyReaction =
+  | "hives"
+  | "rash"
+  | "swelling"
+  | "vomiting"
+  | "diarrhea";
+
+export type RecordType = "vaccine" | "allergy" | "lab";
 
 export interface User {
   id: string;
@@ -40,4 +47,4 @@ export interface Lab {
   instructions: string;
 }
 
-export type MedicalRecord = Vaccine | Allergy | Lab; 
+export type MedicalRecord = Vaccine | Allergy | Lab;

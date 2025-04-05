@@ -1,19 +1,20 @@
 import React from "react";
 import { View, StyleSheet, FlatList } from "react-native";
-import { Text, Card, Button } from "@rneui/themed";
+import { Button, Text, FAB, Card } from "@rneui/themed";
 import { useAppSelector, useAppDispatch } from "../store";
-import { Pet } from "../types";
 import { deletePet } from "../store/petsSlice";
+import { Pet } from "../types";
 import { CompositeScreenProps } from "@react-navigation/native";
 import {
   TabScreenProps,
   RootStackScreenProps,
   RootStackParamList,
 } from "../types/navigation";
+import { commonStyles, customColors } from "../theme";
 
 type Props = CompositeScreenProps<
   TabScreenProps<"Dashboard">,
-  RootStackScreenProps<"MainTabs">
+  RootStackScreenProps<keyof RootStackParamList>
 >;
 
 export default function DashboardScreen({ navigation }: Props) {
@@ -24,83 +25,97 @@ export default function DashboardScreen({ navigation }: Props) {
     dispatch(deletePet(petId));
   };
 
-  const renderPetCard = ({ item }: { item: Pet }) => (
+  const renderPet = ({ item: pet }: { item: Pet }) => (
     <Card containerStyle={styles.card}>
-      <Card.Title>{item.name}</Card.Title>
-      <Card.Divider />
-      <View style={styles.cardContent}>
-        <Text>Type: {item.animalType}</Text>
-        <Text>Breed: {item.breed}</Text>
-        <Text>
-          Date of Birth: {new Date(item.dateOfBirth).toLocaleDateString()}
-        </Text>
-      </View>
-      <View style={styles.buttonContainer}>
+      <Card.Title style={styles.cardTitle}>{pet.name}</Card.Title>
+      <Text style={styles.cardText}>Type: {pet.animalType}</Text>
+      <Text style={styles.cardText}>Breed: {pet.breed}</Text>
+      <View style={styles.cardActions}>
         <Button
           title="View Details"
-          onPress={() => navigation.navigate("PetDetails", { pet: item })}
-          containerStyle={styles.button}
+          onPress={() => navigation.navigate("PetDetails", { pet })}
+          buttonStyle={styles.viewButton}
+          containerStyle={styles.buttonContainer}
         />
         <Button
           title="Delete"
-          onPress={() => handleDeletePet(item.id)}
-          type="outline"
-          containerStyle={styles.button}
+          onPress={() => handleDeletePet(pet.id)}
+          buttonStyle={styles.deleteButton}
+          containerStyle={styles.buttonContainer}
         />
       </View>
     </Card>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       <Text h3 style={styles.title}>
         My Pets
       </Text>
       {pets.length === 0 ? (
-        <Text style={styles.emptyText}>
-          No pets added yet. Add your first pet!
-        </Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No pets added yet</Text>
+        </View>
       ) : (
         <FlatList
           data={pets}
-          renderItem={renderPetCard}
-          keyExtractor={(item) => item.id}
+          renderItem={renderPet}
+          keyExtractor={(pet) => pet.id}
           contentContainerStyle={styles.list}
         />
       )}
+      <FAB
+        icon={{ name: "add", color: "white" }}
+        placement="right"
+        color={customColors.buttonPrimary}
+        onPress={() => navigation.navigate("Add Pet")}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
   title: {
-    textAlign: "center",
-    marginVertical: 20,
-  },
-  list: {
-    paddingBottom: 20,
+    color: customColors.primary,
+    marginBottom: 20,
   },
   card: {
-    borderRadius: 10,
-    marginBottom: 10,
+    ...commonStyles.card,
+    marginBottom: 15,
   },
-  cardContent: {
-    marginBottom: 10,
+  cardTitle: {
+    color: customColors.primary,
+    fontSize: 18,
+  },
+  cardText: {
+    color: customColors.text,
+    marginBottom: 5,
+  },
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
   },
   buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+    flex: 1,
+    marginHorizontal: 5,
   },
-  button: {
-    width: "45%",
+  viewButton: {
+    backgroundColor: customColors.buttonPrimary,
+  },
+  deleteButton: {
+    backgroundColor: customColors.error,
+  },
+  list: {
+    padding: 10,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
-    textAlign: "center",
-    marginTop: 20,
+    color: customColors.secondaryText,
     fontSize: 16,
   },
 });

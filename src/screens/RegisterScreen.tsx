@@ -5,13 +5,14 @@ import { useAppDispatch } from "../store";
 import { setUser } from "../store/userSlice";
 import { User } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
+import { commonStyles, customColors } from "../theme";
 
 type Props = RootStackScreenProps<"Register">;
 
 export default function RegisterScreen({ navigation }: Props) {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const dispatch = useAppDispatch();
 
   const handleRegister = () => {
@@ -25,54 +26,85 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.container, styles.container]}>
       <Text h3 style={styles.title}>
         Create Account
       </Text>
-      <Input
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        autoCapitalize="words"
-      />
-      <Input
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <Input
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button
-        title="Register"
-        onPress={handleRegister}
-        containerStyle={styles.buttonContainer}
-      />
-      <Button
-        title="Already have an account? Login"
-        type="clear"
-        onPress={() => navigation.navigate("Login")}
-      />
+      <View style={styles.form}>
+        <Input
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+        />
+        <Input
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+        />
+        <Input
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+        />
+        <Button
+          title="Register"
+          onPress={handleRegister}
+          containerStyle={styles.buttonContainer}
+          buttonStyle={styles.button}
+        />
+        <Button
+          title="Already have an account? Login"
+          type="clear"
+          onPress={() => navigation.navigate("Login")}
+          titleStyle={styles.linkText}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
     justifyContent: "center",
   },
   title: {
+    color: customColors.primary,
     textAlign: "center",
     marginBottom: 30,
   },
+  form: {
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  inputContainer: {
+    borderBottomWidth: 0,
+    backgroundColor: customColors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginVertical: 5,
+  },
+  inputText: {
+    color: customColors.text,
+  },
   buttonContainer: {
     marginVertical: 10,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  button: {
+    backgroundColor: customColors.buttonPrimary,
+    paddingVertical: 12,
+  },
+  linkText: {
+    color: customColors.primary,
   },
 });

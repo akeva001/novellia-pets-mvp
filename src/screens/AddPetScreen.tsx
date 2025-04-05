@@ -4,12 +4,17 @@ import { Text, Input, Button } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
 import { addPet } from "../store/petsSlice";
 import { CompositeScreenProps } from "@react-navigation/native";
-import { TabScreenProps, RootStackScreenProps } from "../types/navigation";
+import {
+  TabScreenProps,
+  RootStackScreenProps,
+  RootStackParamList,
+} from "../types/navigation";
 import { AnimalType } from "../types";
+import { commonStyles, customColors } from "../theme";
 
 type Props = CompositeScreenProps<
   TabScreenProps<"Add Pet">,
-  RootStackScreenProps<"MainTabs">
+  RootStackScreenProps<keyof RootStackParamList>
 >;
 
 export default function AddPetScreen({ navigation }: Props) {
@@ -41,7 +46,7 @@ export default function AddPetScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[commonStyles.container, styles.container]}>
       <Text h3 style={styles.title}>
         Add New Pet
       </Text>
@@ -51,29 +56,42 @@ export default function AddPetScreen({ navigation }: Props) {
           value={name}
           onChangeText={setName}
           placeholder="Enter pet name"
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+          labelStyle={styles.label}
         />
         <Input
           label="Animal Type"
           value={animalType}
           onChangeText={(value) => setAnimalType(value as AnimalType)}
           placeholder="e.g., Dog, Cat, Bird"
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+          labelStyle={styles.label}
         />
         <Input
           label="Breed"
           value={breed}
           onChangeText={setBreed}
           placeholder="Enter breed"
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+          labelStyle={styles.label}
         />
         <Input
           label="Date of Birth"
           value={dateOfBirth}
           onChangeText={setDateOfBirth}
           placeholder="YYYY-MM-DD"
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+          labelStyle={styles.label}
         />
         <Button
           title="Add Pet"
           onPress={handleSubmit}
-          containerStyle={styles.button}
+          containerStyle={styles.buttonContainer}
+          buttonStyle={styles.button}
         />
       </View>
     </ScrollView>
@@ -82,17 +100,37 @@ export default function AddPetScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
+    paddingHorizontal: 0,
   },
   title: {
+    color: customColors.primary,
     textAlign: "center",
     marginVertical: 20,
   },
   form: {
-    // Add appropriate styles for the form
+    paddingHorizontal: 20,
+  },
+  inputContainer: {
+    borderBottomWidth: 0,
+    backgroundColor: customColors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginVertical: 5,
+  },
+  inputText: {
+    color: customColors.text,
+  },
+  label: {
+    color: customColors.primary,
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    marginVertical: 20,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   button: {
-    marginVertical: 20,
+    backgroundColor: customColors.buttonPrimary,
+    paddingVertical: 12,
   },
 });

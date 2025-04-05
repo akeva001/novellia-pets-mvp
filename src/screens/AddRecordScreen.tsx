@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Button, Input, Text } from "@rneui/themed";
+import { Text, Input, Button, ButtonGroup } from "@rneui/themed";
 import { useAppDispatch } from "../store";
 import { addRecord } from "../store/medicalRecordsSlice";
+import { RootStackScreenProps } from "../types/navigation";
 import {
   Vaccine,
   Allergy,
   Lab,
-  AllergySeverity,
   AllergyReaction,
+  AllergySeverity,
+  RecordType,
 } from "../types";
-import { Picker } from "@react-native-picker/picker";
-import { RootStackScreenProps } from "../types/navigation";
+import { commonStyles, customColors } from "../theme";
 
-type RecordType = "vaccine" | "allergy" | "lab";
 type Props = RootStackScreenProps<"AddRecord">;
 
 export default function AddRecordScreen({ route, navigation }: Props) {
@@ -33,7 +33,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
       return;
     }
 
-    let newRecord: Vaccine | Allergy | Lab;
+    let newRecord: Vaccine | Allergy | Lab = {} as any;
 
     switch (recordType) {
       case "vaccine":
@@ -91,132 +91,204 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[commonStyles.container, styles.container]}>
       <Text h3 style={styles.title}>
         Add Medical Record
       </Text>
-
-      <View style={styles.pickerContainer}>
-        <Text style={styles.label}>Record Type</Text>
-        <Picker
-          selectedValue={recordType}
-          onValueChange={(value) => setRecordType(value as RecordType)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Vaccine" value="vaccine" />
-          <Picker.Item label="Allergy" value="allergy" />
-          <Picker.Item label="Lab" value="lab" />
-        </Picker>
-      </View>
-
-      <Input
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        autoCapitalize="words"
+      <ButtonGroup
+        buttons={["Vaccine", "Allergy", "Lab"]}
+        selectedIndex={["vaccine", "allergy", "lab"].indexOf(recordType)}
+        onPress={(index) =>
+          setRecordType(["vaccine", "allergy", "lab"][index] as RecordType)
+        }
+        containerStyle={styles.buttonGroup}
+        selectedButtonStyle={styles.selectedButton}
+        textStyle={styles.buttonText}
+        selectedTextStyle={styles.selectedButtonText}
       />
-
-      {recordType === "vaccine" && (
+      <View style={styles.form}>
         <Input
-          placeholder="Date Administered (YYYY-MM-DD)"
-          value={dateAdministered}
-          onChangeText={setDateAdministered}
-          keyboardType="numbers-and-punctuation"
+          label="Name"
+          value={name}
+          onChangeText={setName}
+          placeholder={`Enter ${recordType} name`}
+          inputStyle={styles.inputText}
+          inputContainerStyle={styles.inputContainer}
+          labelStyle={styles.label}
         />
-      )}
 
-      {recordType === "allergy" && (
-        <>
-          <View style={styles.reactionsContainer}>
+        {recordType === "vaccine" && (
+          <Input
+            label="Date Administered"
+            value={dateAdministered}
+            onChangeText={setDateAdministered}
+            placeholder="YYYY-MM-DD"
+            inputStyle={styles.inputText}
+            inputContainerStyle={styles.inputContainer}
+            labelStyle={styles.label}
+          />
+        )}
+
+        {recordType === "allergy" && (
+          <>
             <Text style={styles.label}>Reactions</Text>
-            {(
-              [
-                "hives",
-                "rash",
-                "swelling",
-                "vomiting",
-                "diarrhea",
-              ] as AllergyReaction[]
-            ).map((reaction) => (
-              <Button
-                key={reaction}
-                title={reaction}
-                type={reactions.includes(reaction) ? "solid" : "outline"}
-                onPress={() => toggleReaction(reaction)}
-                containerStyle={styles.reactionButton}
-              />
-            ))}
-          </View>
-          <View style={styles.pickerContainer}>
-            <Text style={styles.label}>Severity</Text>
-            <Picker
-              selectedValue={severity}
-              onValueChange={(value) => setSeverity(value as AllergySeverity)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Mild" value="mild" />
-              <Picker.Item label="Severe" value="severe" />
-            </Picker>
-          </View>
-        </>
-      )}
+            <View style={styles.reactionsContainer}>
+              {["rash", "swelling", "breathing", "other"].map((reaction) => (
+                <Button
+                  key={reaction}
+                  title={reaction}
+                  type={
+                    reactions.includes(reaction as AllergyReaction)
+                      ? "solid"
+                      : "outline"
+                  }
+                  onPress={() => toggleReaction(reaction as AllergyReaction)}
+                  containerStyle={styles.reactionButton}
+                  buttonStyle={
+                    reactions.includes(reaction as AllergyReaction)
+                      ? styles.selectedReactionButton
+                      : styles.outlineButton
+                  }
+                  titleStyle={
+                    reactions.includes(reaction as AllergyReaction)
+                      ? styles.selectedButtonText
+                      : styles.outlineButtonText
+                  }
+                />
+              ))}
+            </View>
+            <ButtonGroup
+              buttons={["Mild", "Moderate", "Severe"]}
+              selectedIndex={["mild", "moderate", "severe"].indexOf(severity)}
+              onPress={(index) =>
+                setSeverity(
+                  ["mild", "moderate", "severe"][index] as AllergySeverity
+                )
+              }
+              containerStyle={styles.severityGroup}
+              selectedButtonStyle={styles.selectedButton}
+              textStyle={styles.buttonText}
+              selectedTextStyle={styles.selectedButtonText}
+            />
+          </>
+        )}
 
-      {recordType === "lab" && (
-        <>
-          <Input
-            placeholder="Dosage (e.g., 3.35 mg)"
-            value={dosage}
-            onChangeText={setDosage}
-          />
-          <Input
-            placeholder="Instructions"
-            value={instructions}
-            onChangeText={setInstructions}
-            multiline
-            numberOfLines={4}
-          />
-        </>
-      )}
+        {recordType === "lab" && (
+          <>
+            <Input
+              label="Dosage"
+              value={dosage}
+              onChangeText={setDosage}
+              placeholder="Enter dosage"
+              inputStyle={styles.inputText}
+              inputContainerStyle={styles.inputContainer}
+              labelStyle={styles.label}
+            />
+            <Input
+              label="Instructions"
+              value={instructions}
+              onChangeText={setInstructions}
+              placeholder="Enter instructions"
+              multiline
+              numberOfLines={3}
+              inputStyle={styles.inputText}
+              inputContainerStyle={styles.inputContainer}
+              labelStyle={styles.label}
+            />
+          </>
+        )}
 
-      <Button
-        title="Add Record"
-        onPress={handleAddRecord}
-        containerStyle={styles.buttonContainer}
-      />
+        <Button
+          title="Add Record"
+          onPress={handleAddRecord}
+          containerStyle={styles.submitButtonContainer}
+          buttonStyle={styles.submitButton}
+        />
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
+    paddingHorizontal: 0,
   },
   title: {
+    color: customColors.primary,
     textAlign: "center",
     marginVertical: 20,
   },
-  pickerContainer: {
-    marginHorizontal: 10,
+  form: {
+    paddingHorizontal: 20,
+  },
+  buttonGroup: {
     marginBottom: 20,
+    borderRadius: 8,
+    borderColor: customColors.border,
+  },
+  selectedButton: {
+    backgroundColor: customColors.buttonPrimary,
+  },
+  buttonText: {
+    color: customColors.text,
+    fontSize: 14,
+  },
+  selectedButtonText: {
+    color: "white",
+    fontSize: 14,
+  },
+  inputContainer: {
+    borderBottomWidth: 0,
+    backgroundColor: customColors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginVertical: 5,
+  },
+  inputText: {
+    color: customColors.text,
   },
   label: {
-    fontSize: 16,
-    color: "#86939e",
+    color: customColors.primary,
     marginBottom: 5,
-  },
-  picker: {
-    backgroundColor: "#f2f2f2",
-    borderRadius: 5,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   reactionsContainer: {
-    marginHorizontal: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   reactionButton: {
-    marginVertical: 5,
+    width: "48%",
+    marginBottom: 10,
+    borderRadius: 8,
+    overflow: "hidden",
   },
-  buttonContainer: {
+  selectedReactionButton: {
+    backgroundColor: customColors.buttonPrimary,
+    borderColor: customColors.buttonPrimary,
+  },
+  outlineButton: {
+    backgroundColor: "transparent",
+    borderColor: customColors.border,
+    borderWidth: 1,
+  },
+  outlineButtonText: {
+    color: customColors.text,
+  },
+  severityGroup: {
+    marginBottom: 20,
+    borderRadius: 8,
+    borderColor: customColors.border,
+  },
+  submitButtonContainer: {
     marginVertical: 20,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  submitButton: {
+    backgroundColor: customColors.buttonPrimary,
+    paddingVertical: 12,
   },
 });
