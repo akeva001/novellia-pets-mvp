@@ -7,13 +7,18 @@ import { ThemeProvider } from "@rneui/themed";
 import { theme } from "./src/theme";
 import * as Font from "expo-font";
 import { SplashScreen } from "./src/components/SplashScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { restoreUser } from "./src/store/userSlice";
+
+const USER_STORAGE_KEY = "@user_data";
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
-    async function loadFonts() {
+    async function loadInitialData() {
       try {
+        // Load fonts
         await Font.loadAsync({
           // Regular styles
           "PublicSans-Regular": require("./assets/fonts/public-sans/PublicSans-Regular.otf"),
@@ -35,15 +40,22 @@ export default function App() {
           "PublicSans-SemiBold": require("./assets/fonts/public-sans/PublicSans-SemiBold.otf"),
           "PublicSans-SemiBoldItalic": require("./assets/fonts/public-sans/PublicSans-SemiBoldItalic.otf"),
         });
+
+        // Check for stored user data
+        const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          store.dispatch(restoreUser(JSON.parse(storedUser)));
+        }
+
         setFontsLoaded(true);
       } catch (error) {
-        console.error("Error loading fonts:", error);
+        console.error("Error loading initial data:", error);
         // Set fonts as loaded even if there's an error to not block the app
         setFontsLoaded(true);
       }
     }
 
-    loadFonts();
+    loadInitialData();
   }, []);
 
   if (!fontsLoaded) {

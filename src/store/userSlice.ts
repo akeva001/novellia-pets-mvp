@@ -1,36 +1,42 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { User } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserState {
-  currentUser: User | null;
-  loading: boolean;
-  error: string | null;
+  user: User | null;
 }
 
 const initialState: UserState = {
-  currentUser: null,
-  loading: false,
-  error: null,
+  user: null,
 };
 
-const userSlice = createSlice({
+const USER_STORAGE_KEY = "@user_data";
+
+export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User | null>) => {
-      state.currentUser = action.payload;
+    setUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+      // Store user data in AsyncStorage
+      AsyncStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(action.payload)
+      ).catch((error) => console.error("Error storing user data:", error));
     },
     signOut: (state) => {
-      state.currentUser = null;
+      state.user = null;
+      // Remove user data from AsyncStorage
+      AsyncStorage.removeItem(USER_STORAGE_KEY).catch((error) =>
+        console.error("Error removing user data:", error)
+      );
     },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload;
+    restoreUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
     },
   },
 });
 
-export const { setUser, signOut, setLoading, setError } = userSlice.actions;
+export const { setUser, signOut, restoreUser } = userSlice.actions;
+
 export default userSlice.reducer;

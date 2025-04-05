@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { Text, Input, Button } from "@rneui/themed";
-import { useAppDispatch } from "../store";
+import { useAppDispatch, useAppSelector } from "../store";
 import { updateRecord, deleteRecord } from "../store/medicalRecordsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
@@ -18,9 +18,10 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 type Props = RootStackScreenProps<"EditRecord">;
 
-export default function EditRecordScreen({ route, navigation }: Props) {
-  const { record, petId } = route.params;
+export default function EditRecordScreen({ navigation, route }: Props) {
   const dispatch = useAppDispatch();
+  const userId = useAppSelector((state) => state.user.user?.id);
+  const { record, petId } = route.params;
 
   const [name, setName] = useState(record.name);
   const [dateAdministered, setDateAdministered] = useState(

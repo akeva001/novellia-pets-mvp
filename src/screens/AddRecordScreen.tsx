@@ -7,7 +7,7 @@ import {
   Pressable,
 } from "react-native";
 import { Text, Input, Button, ButtonGroup } from "@rneui/themed";
-import { useAppDispatch } from "../store";
+import { useAppDispatch, useAppSelector } from "../store";
 import { addRecord } from "../store/medicalRecordsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import {
@@ -24,6 +24,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 type Props = RootStackScreenProps<"AddRecord">;
 
 export default function AddRecordScreen({ route, navigation }: Props) {
+  const dispatch = useAppDispatch();
+  const userId = useAppSelector((state) => state.user.user?.id);
   const { petId } = route.params;
   const [recordType, setRecordType] = useState<RecordType>("vaccine");
   const [name, setName] = useState("");
@@ -33,7 +35,6 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   const [severity, setSeverity] = useState<AllergySeverity>("mild");
   const [dosage, setDosage] = useState("");
   const [instructions, setInstructions] = useState("");
-  const dispatch = useAppDispatch();
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === "ios");

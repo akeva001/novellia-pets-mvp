@@ -12,8 +12,9 @@ import { LinearGradient } from "expo-linear-gradient";
 type Props = RootStackScreenProps<"Dashboard">;
 
 export default function DashboardScreen({ navigation }: Props) {
-  const pets = useAppSelector((state) => state.pets.pets);
   const dispatch = useAppDispatch();
+  const userId = useAppSelector((state) => state.user.user?.id);
+  const pets = useAppSelector((state) => state.pets.pets);
 
   const handleDeletePet = (petId: string) => {
     dispatch(deletePet(petId));

@@ -53,12 +53,12 @@ const screenOptions = {
 };
 
 export const Navigation = () => {
-  const currentUser = useAppSelector((state) => state.user.currentUser);
+  const user = useAppSelector((state) => state.user.user);
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
-        {!currentUser ? (
+        {!user ? (
           // Auth Stack
           <>
             <Stack.Screen

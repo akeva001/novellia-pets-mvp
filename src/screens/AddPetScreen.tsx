@@ -22,7 +22,7 @@ type Props = RootStackScreenProps<"AddPet">;
 
 export default function AddPetScreen({ navigation, route }: Props) {
   const dispatch = useAppDispatch();
-  const userId = useAppSelector((state) => state.user.currentUser?.id);
+  const userId = useAppSelector((state) => state.user.user?.id);
   const existingPet = route.params?.pet;
 
   const [name, setName] = useState(existingPet?.name || "");
