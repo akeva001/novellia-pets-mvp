@@ -1,31 +1,40 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, Alert } from "react-native";
 import { Text, Input, Button } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
-import { addPet } from "../store/petsSlice";
+import { addPet, deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { AnimalType } from "../types";
 import { commonStyles, customColors } from "../theme";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Props = RootStackScreenProps<"AddPet">;
 
-export default function AddPetScreen({ navigation }: Props) {
+export default function AddPetScreen({ navigation, route }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.user.currentUser?.id);
-  const [name, setName] = useState("");
-  const [animalType, setAnimalType] = useState<AnimalType>("dog");
-  const [breed, setBreed] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const existingPet = route.params?.pet;
+
+  const [name, setName] = useState(existingPet?.name || "");
+  const [animalType, setAnimalType] = useState<AnimalType>(
+    existingPet?.animalType || "dog"
+  );
+  const [breed, setBreed] = useState(existingPet?.breed || "");
+  const [dateOfBirth, setDateOfBirth] = useState(
+    existingPet?.dateOfBirth
+      ? new Date(existingPet.dateOfBirth).toISOString().split("T")[0]
+      : ""
+  );
 
   const handleSubmit = () => {
     if (!name || !animalType || !breed || !dateOfBirth || !userId) {
-      // TODO: Add proper form validation
+      Alert.alert("Missing Information", "Please fill in all fields");
       return;
     }
 
     dispatch(
       addPet({
-        id: Date.now().toString(),
+        id: existingPet?.id || Date.now().toString(),
         userId,
         name,
         animalType,
@@ -37,11 +46,35 @@ export default function AddPetScreen({ navigation }: Props) {
     navigation.goBack();
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Pet",
+      `Are you sure you want to delete ${name}? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            if (existingPet?.id) {
+              dispatch(deletePet(existingPet.id));
+              navigation.goBack();
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={[commonStyles.container, styles.container]}>
-      <Text h3 style={styles.title}>
-        Add New Pet
+      <Text style={styles.screenTitle}>
+        {existingPet ? "Edit Pet" : "Add New Pet"}
       </Text>
+
       <View style={styles.form}>
         <Input
           label="Pet Name"
@@ -51,6 +84,7 @@ export default function AddPetScreen({ navigation }: Props) {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
+          placeholderTextColor={customColors.secondaryText}
         />
         <Input
           label="Animal Type"
@@ -60,6 +94,7 @@ export default function AddPetScreen({ navigation }: Props) {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
+          placeholderTextColor={customColors.secondaryText}
         />
         <Input
           label="Breed"
@@ -69,6 +104,7 @@ export default function AddPetScreen({ navigation }: Props) {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
+          placeholderTextColor={customColors.secondaryText}
         />
         <Input
           label="Date of Birth"
@@ -78,13 +114,36 @@ export default function AddPetScreen({ navigation }: Props) {
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
+          placeholderTextColor={customColors.secondaryText}
         />
-        <Button
-          title="Add Pet"
-          onPress={handleSubmit}
-          containerStyle={styles.buttonContainer}
-          buttonStyle={styles.button}
-        />
+
+        <LinearGradient
+          colors={["#d14f30", "#e85a39"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.submitButtonGradient}
+        >
+          <Button
+            title={existingPet ? "Save Changes" : "Add Pet"}
+            onPress={handleSubmit}
+            containerStyle={styles.buttonContainer}
+            buttonStyle={styles.submitButton}
+            titleStyle={styles.buttonText}
+          />
+        </LinearGradient>
+
+        {existingPet && (
+          <Button
+            title="Delete Pet"
+            onPress={handleDelete}
+            containerStyle={[
+              styles.buttonContainer,
+              styles.deleteButtonContainer,
+            ]}
+            buttonStyle={styles.deleteButton}
+            titleStyle={styles.deleteButtonText}
+          />
+        )}
       </View>
     </ScrollView>
   );
@@ -92,39 +151,75 @@ export default function AddPetScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 0,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
   },
-  title: {
+  screenTitle: {
+    fontSize: 34,
+    fontWeight: "bold",
     color: customColors.primary,
-    textAlign: "center",
-    marginVertical: 20,
+    marginTop: 20,
+    marginBottom: 24,
   },
   form: {
-    paddingHorizontal: 20,
+    marginTop: 8,
   },
   inputContainer: {
     borderBottomWidth: 0,
-    backgroundColor: customColors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginVertical: 5,
+    backgroundColor: customColors.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputText: {
     color: customColors.text,
+    fontSize: 17,
+    paddingVertical: 8,
   },
   label: {
     color: customColors.primary,
-    marginBottom: 5,
-    fontSize: 16,
-    fontWeight: "bold",
+    marginBottom: 8,
+    fontSize: 17,
+    fontWeight: "600",
   },
-  buttonContainer: {
-    marginVertical: 20,
-    borderRadius: 8,
+  submitButtonGradient: {
+    borderRadius: 12,
+    marginTop: 24,
+    marginBottom: 16,
     overflow: "hidden",
   },
-  button: {
-    backgroundColor: customColors.buttonPrimary,
-    paddingVertical: 12,
+  buttonContainer: {
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  submitButton: {
+    backgroundColor: "transparent",
+    paddingVertical: 14,
+  },
+  deleteButtonContainer: {
+    marginTop: 8,
+  },
+  deleteButton: {
+    backgroundColor: "rgba(220, 38, 38, 0.1)",
+    paddingVertical: 14,
+  },
+  buttonText: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "white",
+  },
+  deleteButtonText: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: customColors.error,
   },
 });
