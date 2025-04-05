@@ -4,6 +4,7 @@ import { Text, Icon } from "@rneui/themed";
 import { useNavigation } from "@react-navigation/native";
 import { customColors, commonStyles } from "../theme";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface CustomHeaderProps {
   title: string;
@@ -17,40 +18,41 @@ export default function CustomHeader({
   const navigation = useNavigation();
 
   return (
-    <SafeAreaView
-      edges={["top"]}
-      style={[commonStyles.header, styles.safeArea]}
+    <LinearGradient
+      colors={["#842812", "#ae3e23", "#d14f30", "#e85a39"]}
+      style={styles.gradient}
     >
-      <View style={styles.header}>
-        {showBack && (
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon
-              name="arrow-back-ios"
-              size={24}
-              color={customColors.primary}
-            />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        )}
-        <Text style={styles.title}>{title}</Text>
-      </View>
-    </SafeAreaView>
+      <SafeAreaView edges={["top"]} style={styles.safeArea}>
+        <View style={styles.header}>
+          {showBack && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="arrow-back-ios" size={24} color="white" />
+              <Text style={styles.backText}>Back</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.title}>{title}</Text>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    width: "100%",
+  },
   safeArea: {
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   header: {
     height: 44,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   backButton: {
     flexDirection: "row",
@@ -62,13 +64,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   backText: {
-    color: customColors.primary,
+    color: "white",
     fontSize: 17,
     marginLeft: -8,
   },
   title: {
     flex: 1,
-    color: customColors.text,
+    color: "white",
     fontSize: 17,
     fontWeight: "600",
     textAlign: "center",

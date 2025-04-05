@@ -52,15 +52,9 @@ export const theme = createTheme({
 });
 
 export const commonStyles = {
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  container: {
+    flex: 1,
+    backgroundColor: "white",
   },
   card: {
     borderRadius: 8,
@@ -75,10 +69,6 @@ export const commonStyles = {
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: customColors.border,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "white",
   },
   title: {
     fontSize: 24,
@@ -106,19 +96,6 @@ export const commonStyles = {
     padding: spacing.md,
     marginVertical: spacing.sm,
     backgroundColor: customColors.buttonPrimary,
-  },
-  header: {
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: customColors.border,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
 };
 
