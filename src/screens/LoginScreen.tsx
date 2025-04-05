@@ -138,11 +138,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginVertical: 8,
     height: 55,
+    alignItems: "center",
+    justifyContent: "center",
   },
   inputText: {
     color: "white",
     fontSize: 16,
     marginLeft: 8,
+    height: 55,
+    paddingVertical: 0,
+    textAlignVertical: "center",
   },
   buttonContainer: {
     marginTop: 16,

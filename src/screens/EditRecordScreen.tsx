@@ -1,12 +1,20 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Platform,
+  Pressable,
+} from "react-native";
 import { Text, Input, Button } from "@rneui/themed";
 import { useAppDispatch } from "../store";
 import { updateRecord, deleteRecord } from "../store/medicalRecordsSlice";
 import { RootStackScreenProps } from "../types/navigation";
-import { commonStyles, customColors } from "../theme";
+import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { AllergyReaction, AllergySeverity } from "../types";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 type Props = RootStackScreenProps<"EditRecord">;
 
@@ -17,9 +25,10 @@ export default function EditRecordScreen({ route, navigation }: Props) {
   const [name, setName] = useState(record.name);
   const [dateAdministered, setDateAdministered] = useState(
     "dateAdministered" in record
-      ? new Date(record.dateAdministered).toISOString().split("T")[0]
-      : ""
+      ? new Date(record.dateAdministered)
+      : new Date()
   );
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Add additional fields based on record type
   const [dosage, setDosage] = useState("dosage" in record ? record.dosage : "");
@@ -39,6 +48,13 @@ export default function EditRecordScreen({ route, navigation }: Props) {
     }
   };
 
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setDateAdministered(selectedDate);
+    }
+  };
+
   const handleSubmit = () => {
     if (!name) {
       Alert.alert("Missing Information", "Please fill in all required fields");
@@ -52,13 +68,9 @@ export default function EditRecordScreen({ route, navigation }: Props) {
 
     let updatedRecord;
     if ("dateAdministered" in record) {
-      if (!dateAdministered) {
-        Alert.alert("Missing Information", "Please enter administration date");
-        return;
-      }
       updatedRecord = {
         ...baseRecord,
-        dateAdministered: new Date(dateAdministered).toISOString(),
+        dateAdministered: dateAdministered.toISOString(),
       };
     } else if ("reactions" in record) {
       if (!reactions || !severity) {
@@ -126,16 +138,28 @@ export default function EditRecordScreen({ route, navigation }: Props) {
         />
 
         {"dateAdministered" in record && (
-          <Input
-            label="Date Administered"
-            value={dateAdministered}
-            onChangeText={setDateAdministered}
-            placeholder="YYYY-MM-DD"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-          />
+          <>
+            <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
+              Date Administered
+            </Text>
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              style={styles.dateInputContainer}
+            >
+              <Text style={styles.dateText}>
+                {dateAdministered.toLocaleDateString()}
+              </Text>
+            </Pressable>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateAdministered}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={onDateChange}
+                maximumDate={new Date()}
+              />
+            )}
+          </>
         )}
 
         {"dosage" in record && (
@@ -223,8 +247,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   screenTitle: {
-    fontSize: 34,
-    fontWeight: "bold",
+    ...typography.title,
     color: customColors.primary,
     marginTop: 20,
     marginBottom: 24,
@@ -238,24 +261,44 @@ const styles = StyleSheet.create({
     backgroundColor: customColors.inputBackground,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    height: 48,
     marginVertical: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateInputContainer: {
+    backgroundColor: customColors.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    marginHorizontal: 10,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    justifyContent: "center",
+  },
+  dateText: {
+    ...typography.body1,
+    color: customColors.text,
   },
   inputText: {
+    ...typography.body1,
     color: customColors.text,
-    fontSize: 17,
-    paddingVertical: 8,
+    textAlignVertical: "center",
+    height: 48,
   },
   label: {
+    ...typography.h3,
     color: customColors.primary,
     marginBottom: 8,
-    fontSize: 17,
-    fontWeight: "600",
   },
   buttonContainer: {
     gap: 12,
@@ -271,8 +314,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   saveButtonText: {
-    fontSize: 17,
-    fontWeight: "600",
+    ...typography.button,
     color: "white",
   },
   deleteButton: {
@@ -283,8 +325,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(220, 38, 38, 0.2)",
   },
   deleteButtonText: {
-    fontSize: 17,
-    fontWeight: "600",
+    ...typography.button,
     color: customColors.error,
   },
 });

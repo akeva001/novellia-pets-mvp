@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Platform,
+  Pressable,
+} from "react-native";
 import { Text, Input, Button, Icon } from "@rneui/themed";
 import RNPickerSelect from "react-native-picker-select";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -7,8 +14,9 @@ import { useAppDispatch, useAppSelector } from "../store";
 import { addPet, deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { AnimalType, AnimalTypeLabels } from "../types";
-import { commonStyles, customColors } from "../theme";
+import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 type Props = RootStackScreenProps<"AddPet">;
 
@@ -23,10 +31,9 @@ export default function AddPetScreen({ navigation, route }: Props) {
   );
   const [breed, setBreed] = useState(existingPet?.breed || "");
   const [dateOfBirth, setDateOfBirth] = useState(
-    existingPet?.dateOfBirth
-      ? new Date(existingPet.dateOfBirth).toISOString().split("T")[0]
-      : ""
+    existingPet?.dateOfBirth ? new Date(existingPet.dateOfBirth) : new Date()
   );
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const animalTypeOptions = Object.entries(AnimalTypeLabels).map(
     ([value, label]) => ({
@@ -34,6 +41,13 @@ export default function AddPetScreen({ navigation, route }: Props) {
       value,
     })
   );
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setDateOfBirth(selectedDate);
+    }
+  };
 
   const handleSubmit = () => {
     if (!name || !animalType || !breed || !dateOfBirth || !userId) {
@@ -48,7 +62,7 @@ export default function AddPetScreen({ navigation, route }: Props) {
         name,
         animalType,
         breed,
-        dateOfBirth: new Date(dateOfBirth).toISOString(),
+        dateOfBirth: dateOfBirth.toISOString(),
       })
     );
 
@@ -155,16 +169,27 @@ export default function AddPetScreen({ navigation, route }: Props) {
           labelStyle={styles.label}
           placeholderTextColor={customColors.secondaryText}
         />
-        <Input
-          label="Date of Birth"
-          value={dateOfBirth}
-          onChangeText={setDateOfBirth}
-          placeholder="YYYY-MM-DD"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
-        />
+
+        <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
+          Date of Birth
+        </Text>
+        <Pressable
+          onPress={() => setShowDatePicker(true)}
+          style={styles.dateInputContainer}
+        >
+          <Text style={styles.dateText}>
+            {dateOfBirth.toLocaleDateString()}
+          </Text>
+        </Pressable>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dateOfBirth}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={onDateChange}
+            maximumDate={new Date()}
+          />
+        )}
 
         <LinearGradient
           colors={["#d14f30", "#e85a39"]}
@@ -201,7 +226,7 @@ export default function AddPetScreen({ navigation, route }: Props) {
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
     fontSize: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: customColors.inputBackground,
@@ -210,10 +235,11 @@ const pickerSelectStyles = StyleSheet.create({
     backgroundColor: customColors.inputBackground,
     paddingRight: 30,
     height: 48,
+    textAlignVertical: "center",
   },
   inputAndroid: {
     fontSize: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: customColors.inputBackground,
@@ -222,6 +248,7 @@ const pickerSelectStyles = StyleSheet.create({
     backgroundColor: customColors.inputBackground,
     paddingRight: 30,
     height: 48,
+    textAlignVertical: "center",
   },
   placeholder: {
     color: customColors.secondaryText,
@@ -253,21 +280,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   screenTitle: {
-    fontSize: 34,
-    fontWeight: "bold",
+    ...typography.title,
     color: customColors.primary,
     marginTop: 20,
     marginBottom: 24,
   },
   form: {
     marginTop: 8,
+    marginBottom: 24,
   },
   inputContainer: {
     borderBottomWidth: 0,
     backgroundColor: customColors.inputBackground,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    height: 48,
     marginVertical: 8,
     shadowColor: "#000",
     shadowOffset: {
@@ -277,17 +304,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateInputContainer: {
+    backgroundColor: customColors.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    marginHorizontal: 10,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    justifyContent: "center",
+  },
+  dateText: {
+    ...typography.body1,
+    color: customColors.text,
   },
   inputText: {
+    ...typography.body1,
     color: customColors.text,
-    fontSize: 17,
-    paddingVertical: 8,
+    textAlignVertical: "center",
+    height: 40,
   },
   label: {
+    ...typography.h3,
     color: customColors.primary,
     marginBottom: 8,
-    fontSize: 17,
-    fontWeight: "600",
   },
   selectedAnimalContainer: {
     flexDirection: "row",
@@ -323,13 +370,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   buttonText: {
-    fontSize: 17,
-    fontWeight: "600",
+    ...typography.button,
     color: "white",
   },
   deleteButtonText: {
-    fontSize: 17,
-    fontWeight: "600",
+    ...typography.button,
     color: customColors.error,
   },
 });

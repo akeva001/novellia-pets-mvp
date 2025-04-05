@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  Pressable,
+} from "react-native";
 import { Text, Input, Button, ButtonGroup } from "@rneui/themed";
 import { useAppDispatch } from "../store";
 import { addRecord } from "../store/medicalRecordsSlice";
@@ -13,6 +19,7 @@ import {
   RecordType,
 } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 type Props = RootStackScreenProps<"AddRecord">;
 
@@ -20,12 +27,20 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   const { petId } = route.params;
   const [recordType, setRecordType] = useState<RecordType>("vaccine");
   const [name, setName] = useState("");
-  const [dateAdministered, setDateAdministered] = useState("");
+  const [dateAdministered, setDateAdministered] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [reactions, setReactions] = useState<AllergyReaction[]>([]);
   const [severity, setSeverity] = useState<AllergySeverity>("mild");
   const [dosage, setDosage] = useState("");
   const [instructions, setInstructions] = useState("");
   const dispatch = useAppDispatch();
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) {
+      setDateAdministered(selectedDate);
+    }
+  };
 
   const handleAddRecord = () => {
     if (!name) {
@@ -37,15 +52,11 @@ export default function AddRecordScreen({ route, navigation }: Props) {
 
     switch (recordType) {
       case "vaccine":
-        if (!dateAdministered) {
-          alert("Please enter the administration date");
-          return;
-        }
         newRecord = {
           id: Date.now().toString(),
           petId,
           name,
-          dateAdministered,
+          dateAdministered: dateAdministered.toISOString(),
         };
         break;
 
@@ -64,15 +75,15 @@ export default function AddRecordScreen({ route, navigation }: Props) {
         break;
 
       case "lab":
-        if (!dosage || !instructions || !dateAdministered) {
-          alert("Please enter dosage, instructions, and administration date");
+        if (!dosage || !instructions) {
+          alert("Please enter dosage and instructions");
           return;
         }
         newRecord = {
           id: Date.now().toString(),
           petId,
           name,
-          dateAdministered,
+          dateAdministered: dateAdministered.toISOString(),
           dosage,
           instructions,
         };
@@ -90,6 +101,31 @@ export default function AddRecordScreen({ route, navigation }: Props) {
         : [...prev, reaction]
     );
   };
+
+  const renderDatePicker = () => (
+    <>
+      <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
+        Date Administered
+      </Text>
+      <Pressable
+        onPress={() => setShowDatePicker(true)}
+        style={styles.dateInputContainer}
+      >
+        <Text style={styles.dateText}>
+          {dateAdministered.toLocaleDateString()}
+        </Text>
+      </Pressable>
+      {showDatePicker && (
+        <DateTimePicker
+          value={dateAdministered}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onDateChange}
+          maximumDate={new Date()}
+        />
+      )}
+    </>
+  );
 
   return (
     <ScrollView style={[commonStyles.container, styles.container]}>
@@ -119,18 +155,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
           placeholderTextColor={customColors.secondaryText}
         />
 
-        {recordType === "vaccine" && (
-          <Input
-            label="Date Administered"
-            value={dateAdministered}
-            onChangeText={setDateAdministered}
-            placeholder="YYYY-MM-DD"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-          />
-        )}
+        {recordType === "vaccine" && renderDatePicker()}
 
         {recordType === "allergy" && (
           <>
@@ -178,16 +203,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
 
         {recordType === "lab" && (
           <>
-            <Input
-              label="Date Administered"
-              value={dateAdministered}
-              onChangeText={setDateAdministered}
-              placeholder="YYYY-MM-DD"
-              inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
-            />
+            {renderDatePicker()}
             <Input
               label="Dosage"
               value={dosage}
@@ -205,8 +221,11 @@ export default function AddRecordScreen({ route, navigation }: Props) {
               placeholder="Enter instructions"
               multiline
               numberOfLines={3}
-              inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
+              inputStyle={[styles.inputText, styles.multilineInput]}
+              inputContainerStyle={[
+                styles.inputContainer,
+                styles.multilineContainer,
+              ]}
               labelStyle={styles.label}
               placeholderTextColor={customColors.secondaryText}
             />
@@ -218,6 +237,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
           onPress={handleAddRecord}
           containerStyle={styles.submitButtonContainer}
           buttonStyle={styles.submitButton}
+          titleStyle={styles.buttonText}
         />
       </View>
     </ScrollView>
@@ -236,6 +256,7 @@ const styles = StyleSheet.create({
   },
   form: {
     paddingHorizontal: 20,
+    marginBottom: 24,
   },
   buttonGroup: {
     marginBottom: 20,
@@ -257,18 +278,56 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderBottomWidth: 0,
     backgroundColor: customColors.inputBackground,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginVertical: 5,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  multilineContainer: {
+    height: 100,
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+  },
+  dateInputContainer: {
+    backgroundColor: customColors.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    marginHorizontal: 10,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    justifyContent: "center",
+  },
+  dateText: {
+    ...typography.body1,
+    color: customColors.text,
   },
   inputText: {
     ...typography.body1,
     color: customColors.text,
+    textAlignVertical: "center",
+    height: 48,
+  },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: "top",
+    paddingTop: 12,
   },
   label: {
     ...typography.h3,
     color: customColors.primary,
-    marginBottom: 5,
+    marginBottom: 8,
   },
   reactionsContainer: {
     flexDirection: "row",
@@ -307,7 +366,7 @@ const styles = StyleSheet.create({
   },
   submitButtonContainer: {
     marginVertical: 20,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
   },
   submitButton: {
