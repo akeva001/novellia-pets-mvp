@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "novellia-temp",
-    "slug": "novellia-temp",
+    "name": "novellia-pets-mvp",
+    "slug": "novellia-pets-mvp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
