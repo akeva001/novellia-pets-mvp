@@ -38,7 +38,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   const [showVaccineDatePicker, setShowVaccineDatePicker] = useState(false);
 
   const [allergyName, setAllergyName] = useState<string>("");
-  const [reactions, setReactions] = useState<AllergyReaction[]>([]);
+  const [reactions, setReactions] = useState<AllergyReaction[]>(["rash"]);
   const [severity, setSeverity] = useState<AllergySeverity>("mild");
 
   const [labName, setLabName] = useState<string>("");
