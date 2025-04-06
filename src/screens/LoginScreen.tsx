@@ -138,6 +138,8 @@ export default function LoginScreen({ navigation }: Props) {
                 validatePassword(text);
               }}
               secureTextEntry
+              textContentType="none"
+              autoComplete="off"
               inputStyle={styles.inputText}
               inputContainerStyle={[
                 styles.inputContainer,
@@ -212,7 +214,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   inputContainer: {
-    borderBottomWidth: 0,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
     backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 12,
     paddingHorizontal: 15,
