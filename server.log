@@ -1,0 +1,12 @@
+[32m🚀 Server running at http://localhost:3000[0m
+[36m📝 Available endpoints:[0m
+[36m   POST /register - Register a new user[0m
+[36m   POST /login - Login user[0m
+[36m   POST /pets - Create a new pet[0m
+[36m   GET /pets - Get all pets[0m
+[36m   PUT /pets/:id - Update a pet[0m
+[36m   DELETE /pets/:id - Delete a pet[0m
+[36m   POST /pets/:petId/records - Create a medical record[0m
+[36m   GET /pets/:petId/records - Get all records for a pet[0m
+[36m   PUT /records/:id - Update a record[0m
+[36m   DELETE /records/:id - Delete a record[0m

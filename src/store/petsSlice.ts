@@ -38,9 +38,21 @@ const petsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    clearData: (state) => {
+      state.pets = [];
+      state.loading = false;
+      state.error = null;
+    },
   },
 });
 
-export const { setPets, addPet, updatePet, deletePet, setLoading, setError } =
-  petsSlice.actions;
+export const {
+  setPets,
+  addPet,
+  updatePet,
+  deletePet,
+  setLoading,
+  setError,
+  clearData,
+} = petsSlice.actions;
 export default petsSlice.reducer;

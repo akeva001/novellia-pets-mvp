@@ -1,6 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { User } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { User } from "../types";
+import { AppThunk, AppDispatch } from "./index";
+import { clearData as clearPetsData } from "./petsSlice";
+import { setPets } from "./petsSlice";
+import * as api from "../api/client";
 
 interface UserState {
   user: User | null;
@@ -10,33 +14,49 @@ const initialState: UserState = {
   user: null,
 };
 
-const USER_STORAGE_KEY = "@user_data";
-
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User>) => {
+    setUser: (state, action: PayloadAction<User | null>) => {
       state.user = action.payload;
-      // Store user data in AsyncStorage
-      AsyncStorage.setItem(
-        USER_STORAGE_KEY,
-        JSON.stringify(action.payload)
-      ).catch((error) => console.error("Error storing user data:", error));
+      if (action.payload) {
+        AsyncStorage.setItem("user", JSON.stringify(action.payload));
+      }
     },
     signOut: (state) => {
       state.user = null;
-      // Remove user data from AsyncStorage
-      AsyncStorage.removeItem(USER_STORAGE_KEY).catch((error) =>
-        console.error("Error removing user data:", error)
-      );
-    },
-    restoreUser: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
+      AsyncStorage.removeItem("user");
     },
   },
 });
 
-export const { setUser, signOut, restoreUser } = userSlice.actions;
+export const { setUser } = userSlice.actions;
+
+export const signOut =
+  (): AppThunk<Promise<void>> => async (dispatch: AppDispatch) => {
+    dispatch(userSlice.actions.signOut());
+    dispatch(clearPetsData());
+  };
+
+export const restoreUser =
+  (): AppThunk<Promise<void>> => async (dispatch: AppDispatch) => {
+    try {
+      const userString = await AsyncStorage.getItem("user");
+      if (userString) {
+        const user = JSON.parse(userString);
+        dispatch(setUser(user));
+
+        try {
+          const pets = await api.getPets(user.id);
+          dispatch(setPets(pets));
+        } catch (error) {
+          console.error("Error fetching pets during restore:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error restoring user:", error);
+    }
+  };
 
 export default userSlice.reducer;

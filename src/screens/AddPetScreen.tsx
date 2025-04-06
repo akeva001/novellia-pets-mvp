@@ -17,6 +17,7 @@ import { AnimalType, AnimalTypeLabels } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"AddPet">;
 
@@ -24,11 +25,10 @@ export default function AddPetScreen({ navigation, route }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.user.user?.id);
   const existingPet = route.params?.pet;
+  const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState(existingPet?.name || "");
-  const [animalType, setAnimalType] = useState<AnimalType>(
-    existingPet?.animalType || "dog"
-  );
+  const [type, setType] = useState<AnimalType>(existingPet?.type || "dog");
   const [breed, setBreed] = useState(existingPet?.breed || "");
   const [dateOfBirth, setDateOfBirth] = useState(
     existingPet?.dateOfBirth ? new Date(existingPet.dateOfBirth) : new Date()
@@ -38,7 +38,7 @@ export default function AddPetScreen({ navigation, route }: Props) {
   const animalTypeOptions = Object.entries(AnimalTypeLabels).map(
     ([value, label]) => ({
       label,
-      value,
+      value: value as AnimalType,
     })
   );
 
@@ -49,27 +49,43 @@ export default function AddPetScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleSubmit = () => {
-    if (!name || !animalType || !breed || !dateOfBirth || !userId) {
+  const handleSubmit = async () => {
+    if (!name || !type || !breed || !userId) {
       Alert.alert("Missing Information", "Please fill in all fields");
       return;
     }
 
-    dispatch(
-      addPet({
-        id: existingPet?.id || Date.now().toString(),
-        userId,
+    try {
+      setLoading(true);
+      const petData = {
         name,
-        animalType,
+        type,
         breed,
         dateOfBirth: dateOfBirth.toISOString(),
-      })
-    );
+      };
 
-    navigation.goBack();
+      if (existingPet?.id) {
+        const updatedPet = await api.updatePet(userId, existingPet.id, petData);
+        dispatch(addPet(updatedPet));
+      } else {
+        const newPet = await api.createPet(userId, petData);
+        dispatch(addPet(newPet));
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to save pet"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!userId || !existingPet?.id) return;
+
     Alert.alert(
       "Delete Pet",
       `Are you sure you want to delete ${name}? This action cannot be undone.`,
@@ -81,10 +97,19 @@ export default function AddPetScreen({ navigation, route }: Props) {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            if (existingPet?.id) {
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await api.deletePet(userId, existingPet.id);
               dispatch(deletePet(existingPet.id));
               navigation.goBack();
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                error instanceof Error ? error.message : "Failed to delete pet"
+              );
+            } finally {
+              setLoading(false);
             }
           },
         },
@@ -114,14 +139,10 @@ export default function AddPetScreen({ navigation, route }: Props) {
         <View style={styles.pickerContainer}>
           <RNPickerSelect
             onValueChange={(value) => {
-              if (value) setAnimalType(value as AnimalType);
+              if (value) setType(value as AnimalType);
             }}
-            items={[
-              { label: "Dog", value: "dog" },
-              { label: "Cat", value: "cat" },
-              { label: "Bird", value: "bird" },
-            ]}
-            value={animalType}
+            items={animalTypeOptions}
+            value={type}
             useNativeAndroidPickerStyle={false}
             placeholder={{
               label: "Select an animal type",
@@ -141,23 +162,6 @@ export default function AddPetScreen({ navigation, route }: Props) {
             )}
           />
         </View>
-
-        {/* <View style={styles.selectedAnimalContainer}>
-          <FontAwesome5
-            name={
-              animalType === "dog"
-                ? "dog"
-                : animalType === "cat"
-                ? "cat"
-                : "dove"
-            }
-            size={24}
-            color={customColors.primary}
-          />
-          <Text style={styles.selectedAnimalText}>
-            Selected: {AnimalTypeLabels[animalType]}
-          </Text>
-        </View> */}
 
         <Input
           label="Breed"
@@ -200,9 +204,11 @@ export default function AddPetScreen({ navigation, route }: Props) {
           <Button
             title={existingPet ? "Save Changes" : "Add Pet"}
             onPress={handleSubmit}
-            containerStyle={styles.buttonContainer}
-            buttonStyle={styles.submitButton}
-            titleStyle={styles.buttonText}
+            containerStyle={styles.submitButton}
+            buttonStyle={{ backgroundColor: "transparent" }}
+            titleStyle={styles.submitButtonText}
+            loading={loading}
+            disabled={loading}
           />
         </LinearGradient>
 
@@ -369,7 +375,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(220, 38, 38, 0.1)",
     paddingVertical: 14,
   },
-  buttonText: {
+  submitButtonText: {
     ...typography.button,
     color: "white",
   },

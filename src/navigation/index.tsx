@@ -5,7 +5,6 @@ import { useAppSelector } from "../store";
 import { RootStackParamList } from "../types/navigation";
 import CustomHeader from "../components/CustomHeader";
 
-// Import screens
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -22,11 +21,10 @@ const screenOptions = {
     let title = route.name;
     let showSignOut = false;
 
-    // Custom titles for specific routes
     switch (route.name) {
       case "Dashboard":
         title = "Dashboard";
-        showSignOut = true; // Enable sign-out button for Dashboard
+        showSignOut = true;
         break;
       case "AddPet":
         title = "Add Pet";

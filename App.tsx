@@ -18,39 +18,27 @@ export default function App() {
   useEffect(() => {
     async function loadInitialData() {
       try {
-        // Load fonts
         await Font.loadAsync({
-          // Regular styles
           "PublicSans-Regular": require("./assets/fonts/public-sans/PublicSans-Regular.otf"),
           "PublicSans-Italic": require("./assets/fonts/public-sans/PublicSans-Italic.otf"),
-
-          // Medium styles
           "PublicSans-Medium": require("./assets/fonts/public-sans/PublicSans-Medium.otf"),
           "PublicSans-MediumItalic": require("./assets/fonts/public-sans/PublicSans-MediumItalic.otf"),
-
-          // Bold styles
           "PublicSans-Bold": require("./assets/fonts/public-sans/PublicSans-Bold.otf"),
           "PublicSans-BoldItalic": require("./assets/fonts/public-sans/PublicSans-BoldItalic.otf"),
-
-          // ExtraBold styles
           "PublicSans-ExtraBold": require("./assets/fonts/public-sans/PublicSans-ExtraBold.otf"),
           "PublicSans-ExtraBoldItalic": require("./assets/fonts/public-sans/PublicSans-ExtraBoldItalic.otf"),
-
-          // SemiBold styles
           "PublicSans-SemiBold": require("./assets/fonts/public-sans/PublicSans-SemiBold.otf"),
           "PublicSans-SemiBoldItalic": require("./assets/fonts/public-sans/PublicSans-SemiBoldItalic.otf"),
         });
 
-        // Check for stored user data
         const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
         if (storedUser) {
-          store.dispatch(restoreUser(JSON.parse(storedUser)));
+          store.dispatch(restoreUser());
         }
 
         setFontsLoaded(true);
       } catch (error) {
         console.error("Error loading initial data:", error);
-        // Set fonts as loaded even if there's an error to not block the app
         setFontsLoaded(true);
       }
     }

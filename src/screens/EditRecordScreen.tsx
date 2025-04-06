@@ -7,14 +7,21 @@ import {
   Platform,
   Pressable,
 } from "react-native";
-import { Text, Input, Button } from "@rneui/themed";
+import { Text, Input, Button, ButtonGroup } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
 import { updateRecord, deleteRecord } from "../store/medicalRecordsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { AllergyReaction, AllergySeverity } from "../types";
+import {
+  AllergyReaction,
+  AllergySeverity,
+  Vaccine,
+  Allergy,
+  Lab,
+} from "../types";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"EditRecord">;
 
@@ -22,6 +29,7 @@ export default function EditRecordScreen({ navigation, route }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.user.user?.id);
   const { record, petId } = route.params;
+  const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState(record.name);
   const [dateAdministered, setDateAdministered] = useState(
@@ -31,7 +39,6 @@ export default function EditRecordScreen({ navigation, route }: Props) {
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Add additional fields based on record type
   const [dosage, setDosage] = useState("dosage" in record ? record.dosage : "");
   const [instructions, setInstructions] = useState(
     "instructions" in record ? record.instructions : ""
@@ -56,66 +63,111 @@ export default function EditRecordScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleSubmit = () => {
-    if (!name) {
-      Alert.alert("Missing Information", "Please fill in all required fields");
+  const handleSubmit = async () => {
+    if (!name || !userId) {
+      Alert.alert("Error", "Please enter a name for the record");
       return;
     }
 
-    const baseRecord = {
-      ...record,
-      name,
-    };
+    try {
+      setLoading(true);
+      let updates: Partial<Vaccine | Allergy | Lab> = { name };
 
-    let updatedRecord;
-    if ("dateAdministered" in record) {
-      updatedRecord = {
-        ...baseRecord,
-        dateAdministered: dateAdministered.toISOString(),
-      };
-    } else if ("reactions" in record) {
-      if (!reactions || !severity) {
-        Alert.alert(
-          "Missing Information",
-          "Please fill in all allergy details"
-        );
-        return;
+      switch (record.type) {
+        case "vaccine":
+          if (!dateAdministered) {
+            Alert.alert("Error", "Please select the date administered");
+            return;
+          }
+          updates = {
+            ...updates,
+            dateAdministered: dateAdministered.toISOString(),
+          };
+          break;
+
+        case "allergy":
+          const allergyReactions = reactions
+            .split(",")
+            .map((r) => r.trim())
+            .filter((r) =>
+              ["rash", "swelling", "breathing", "other"].includes(r)
+            ) as AllergyReaction[];
+
+          if (allergyReactions.length === 0) {
+            Alert.alert("Error", "Please select at least one valid reaction");
+            return;
+          }
+          if (severity !== "mild" && severity !== "severe") {
+            Alert.alert("Error", "Severity must be either mild or severe");
+            return;
+          }
+          updates = {
+            ...updates,
+            reactions: allergyReactions,
+            severity,
+          };
+          break;
+
+        case "lab":
+          if (!dosage) {
+            Alert.alert("Error", "Please enter the dosage");
+            return;
+          }
+          if (!instructions) {
+            Alert.alert("Error", "Please enter the instructions");
+            return;
+          }
+          updates = {
+            ...updates,
+            dosage,
+            instructions,
+          };
+          break;
       }
-      updatedRecord = {
-        ...baseRecord,
-        reactions: reactions
-          .split(",")
-          .map((r) => r.trim()) as AllergyReaction[],
-        severity,
-      };
-    } else {
-      if (!dosage || !instructions) {
-        Alert.alert("Missing Information", "Please fill in all lab details");
-        return;
-      }
-      updatedRecord = {
-        ...baseRecord,
-        dosage,
-        instructions,
-      };
+
+      console.log("Updating record:", updates);
+      const updatedRecord = await api.updateRecord(userId, record.id, updates);
+      console.log("Updated record:", updatedRecord);
+      dispatch(updateRecord(updatedRecord));
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error updating record:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to update record"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    dispatch(updateRecord(updatedRecord));
-    navigation.goBack();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!userId) return;
+
     Alert.alert(
-      "Remove Record",
-      "Are you sure you want to remove this medical record?",
+      "Delete Record",
+      "Are you sure you want to delete this record?",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Remove",
+          text: "Delete",
           style: "destructive",
-          onPress: () => {
-            dispatch(deleteRecord(record.id));
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await api.deleteRecord(userId, record.id);
+              dispatch(deleteRecord(record.id));
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                error instanceof Error
+                  ? error.message
+                  : "Failed to delete record"
+              );
+            } finally {
+              setLoading(false);
+            }
           },
         },
       ]
@@ -124,21 +176,23 @@ export default function EditRecordScreen({ navigation, route }: Props) {
 
   return (
     <ScrollView style={[commonStyles.container, styles.container]}>
-      <Text style={styles.screenTitle}>Edit Record</Text>
+      <Text style={styles.screenTitle}>
+        Edit {record.type.charAt(0).toUpperCase() + record.type.slice(1)}
+      </Text>
 
       <View style={styles.form}>
         <Input
-          label="Record Name"
+          label="Name"
           value={name}
           onChangeText={setName}
-          placeholder="Enter record name"
+          placeholder={`Enter ${record.type} name`}
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
           placeholderTextColor={customColors.secondaryText}
         />
 
-        {"dateAdministered" in record && (
+        {record.type === "vaccine" && (
           <>
             <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
               Date Administered
@@ -163,57 +217,60 @@ export default function EditRecordScreen({ navigation, route }: Props) {
           </>
         )}
 
-        {"dosage" in record && (
-          <Input
-            label="Dosage"
-            value={dosage}
-            onChangeText={setDosage}
-            placeholder="Enter dosage"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-          />
+        {record.type === "allergy" && (
+          <>
+            <Input
+              label="Reactions"
+              value={reactions}
+              onChangeText={setReactions}
+              placeholder="Enter reactions (rash, swelling, breathing, other)"
+              inputStyle={styles.inputText}
+              inputContainerStyle={styles.inputContainer}
+              labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
+            />
+            <ButtonGroup
+              buttons={["Mild", "Severe"]}
+              selectedIndex={["mild", "severe"].indexOf(severity)}
+              onPress={(index) =>
+                setSeverity(["mild", "severe"][index] as AllergySeverity)
+              }
+              containerStyle={styles.severityGroup}
+              selectedButtonStyle={styles.selectedButton}
+              textStyle={styles.buttonText}
+              selectedTextStyle={styles.selectedButtonText}
+            />
+          </>
         )}
 
-        {"instructions" in record && (
-          <Input
-            label="Instructions"
-            value={instructions}
-            onChangeText={setInstructions}
-            placeholder="Enter instructions"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-            multiline
-          />
-        )}
-
-        {"reactions" in record && (
-          <Input
-            label="Reactions"
-            value={reactions}
-            onChangeText={setReactions}
-            placeholder="Enter reactions, separated by commas"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-          />
-        )}
-
-        {"severity" in record && (
-          <Input
-            label="Severity"
-            value={severity}
-            onChangeText={handleSeverityChange}
-            placeholder="Enter severity level (mild/severe)"
-            inputStyle={styles.inputText}
-            inputContainerStyle={styles.inputContainer}
-            labelStyle={styles.label}
-            placeholderTextColor={customColors.secondaryText}
-          />
+        {record.type === "lab" && (
+          <>
+            <Input
+              label="Dosage"
+              value={dosage}
+              onChangeText={setDosage}
+              placeholder="Enter dosage (e.g. 3.35 mg)"
+              inputStyle={styles.inputText}
+              inputContainerStyle={styles.inputContainer}
+              labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
+            />
+            <Input
+              label="Instructions"
+              value={instructions}
+              onChangeText={setInstructions}
+              placeholder="Enter instructions (e.g. Take twice a day for a week with food)"
+              multiline
+              numberOfLines={3}
+              inputStyle={[styles.inputText, styles.multilineInput]}
+              inputContainerStyle={[
+                styles.inputContainer,
+                styles.multilineContainer,
+              ]}
+              labelStyle={styles.label}
+              placeholderTextColor={customColors.secondaryText}
+            />
+          </>
         )}
 
         <View style={styles.buttonContainer}>
@@ -226,16 +283,19 @@ export default function EditRecordScreen({ navigation, route }: Props) {
             <Button
               title="Save Changes"
               onPress={handleSubmit}
-              buttonStyle={styles.saveButton}
-              titleStyle={styles.saveButtonText}
+              buttonStyle={{ backgroundColor: "transparent" }}
+              titleStyle={styles.submitButtonText}
+              loading={loading}
+              disabled={loading}
             />
           </LinearGradient>
 
           <Button
-            title="Remove Record"
+            title="Delete Record"
             onPress={handleDelete}
             buttonStyle={styles.deleteButton}
             titleStyle={styles.deleteButtonText}
+            disabled={loading}
           />
         </View>
       </View>
@@ -310,11 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
   },
-  saveButton: {
-    backgroundColor: "transparent",
-    paddingVertical: 14,
-  },
-  saveButtonText: {
+  submitButtonText: {
     ...typography.button,
     color: "white",
   },
@@ -328,5 +384,26 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     ...typography.button,
     color: customColors.error,
+  },
+  severityGroup: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  selectedButton: {
+    backgroundColor: customColors.primary,
+  },
+  buttonText: {
+    ...typography.body1,
+    color: customColors.text,
+  },
+  selectedButtonText: {
+    ...typography.button,
+    color: "white",
+  },
+  multilineInput: {
+    height: 100,
+  },
+  multilineContainer: {
+    paddingVertical: 16,
   },
 });

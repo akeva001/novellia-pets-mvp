@@ -5,6 +5,7 @@ import {
   ScrollView,
   Platform,
   Pressable,
+  Alert,
 } from "react-native";
 import { Text, Input, Button, ButtonGroup } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
@@ -20,6 +21,7 @@ import {
 } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"AddRecord">;
 
@@ -27,72 +29,111 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.user.user?.id);
   const { petId } = route.params;
+
   const [recordType, setRecordType] = useState<RecordType>("vaccine");
-  const [name, setName] = useState("");
-  const [dateAdministered, setDateAdministered] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [vaccineName, setVaccineName] = useState<string>("");
+  const [vaccineDate, setVaccineDate] = useState(new Date());
+  const [showVaccineDatePicker, setShowVaccineDatePicker] = useState(false);
+
+  const [allergyName, setAllergyName] = useState<string>("");
   const [reactions, setReactions] = useState<AllergyReaction[]>([]);
   const [severity, setSeverity] = useState<AllergySeverity>("mild");
-  const [dosage, setDosage] = useState("");
-  const [instructions, setInstructions] = useState("");
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === "ios");
+  const [labName, setLabName] = useState<string>("");
+  const [dosage, setDosage] = useState<string>("");
+  const [instructions, setInstructions] = useState<string>("");
+
+  const onVaccineDateChange = (event: any, selectedDate?: Date) => {
+    setShowVaccineDatePicker(Platform.OS === "ios");
     if (selectedDate) {
-      setDateAdministered(selectedDate);
+      setVaccineDate(selectedDate);
     }
   };
 
-  const handleAddRecord = () => {
-    if (!name) {
-      alert("Please enter a name");
+  const handleSubmit = async () => {
+    if (!userId) {
+      Alert.alert("Error", "User not found");
       return;
     }
 
-    let newRecord: Vaccine | Allergy | Lab = {} as any;
+    try {
+      setLoading(true);
+      let record: Vaccine | Allergy | Lab;
 
-    switch (recordType) {
-      case "vaccine":
-        newRecord = {
-          id: Date.now().toString(),
-          petId,
-          name,
-          dateAdministered: dateAdministered.toISOString(),
-        };
-        break;
+      switch (recordType) {
+        case "vaccine":
+          if (!vaccineName) {
+            Alert.alert("Error", "Please enter the vaccine name");
+            return;
+          }
+          record = {
+            id: Date.now().toString(),
+            petId,
+            type: "vaccine",
+            name: vaccineName,
+            dateAdministered: vaccineDate.toISOString(),
+          };
+          break;
 
-      case "allergy":
-        if (reactions.length === 0) {
-          alert("Please select at least one reaction");
-          return;
-        }
-        newRecord = {
-          id: Date.now().toString(),
-          petId,
-          name,
-          reactions,
-          severity,
-        };
-        break;
+        case "allergy":
+          if (!allergyName) {
+            Alert.alert("Error", "Please enter the allergy name");
+            return;
+          }
+          if (reactions.length === 0) {
+            Alert.alert("Error", "Please select at least one reaction");
+            return;
+          }
+          record = {
+            id: Date.now().toString(),
+            petId,
+            type: "allergy",
+            name: allergyName,
+            reactions,
+            severity,
+          };
+          break;
 
-      case "lab":
-        if (!dosage || !instructions) {
-          alert("Please enter dosage and instructions");
-          return;
-        }
-        newRecord = {
-          id: Date.now().toString(),
-          petId,
-          name,
-          dateAdministered: dateAdministered.toISOString(),
-          dosage,
-          instructions,
-        };
-        break;
+        case "lab":
+          if (!labName) {
+            Alert.alert("Error", "Please enter the lab name");
+            return;
+          }
+          if (!dosage) {
+            Alert.alert("Error", "Please enter the dosage");
+            return;
+          }
+          if (!instructions) {
+            Alert.alert("Error", "Please enter the instructions");
+            return;
+          }
+          record = {
+            id: Date.now().toString(),
+            petId,
+            type: "lab",
+            name: labName,
+            dosage,
+            instructions,
+          };
+          break;
+      }
+
+      console.log("Creating record:", record);
+      const response = await api.createRecord(userId, petId, record);
+      console.log("Created record:", response);
+      dispatch(addRecord(response));
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error creating record:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to create record"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    dispatch(addRecord(newRecord));
-    navigation.goBack();
   };
 
   const toggleReaction = (reaction: AllergyReaction) => {
@@ -103,30 +144,55 @@ export default function AddRecordScreen({ route, navigation }: Props) {
     );
   };
 
-  const renderDatePicker = () => (
+  const renderVaccineDatePicker = () => (
     <>
       <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
         Date Administered
       </Text>
       <Pressable
-        onPress={() => setShowDatePicker(true)}
+        onPress={() => setShowVaccineDatePicker(true)}
         style={styles.dateInputContainer}
       >
-        <Text style={styles.dateText}>
-          {dateAdministered.toLocaleDateString()}
-        </Text>
+        <Text style={styles.dateText}>{vaccineDate.toLocaleDateString()}</Text>
       </Pressable>
-      {showDatePicker && (
+      {showVaccineDatePicker && (
         <DateTimePicker
-          value={dateAdministered}
+          value={vaccineDate}
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={onDateChange}
+          onChange={onVaccineDateChange}
           maximumDate={new Date()}
         />
       )}
     </>
   );
+
+  const getCurrentName = () => {
+    switch (recordType) {
+      case "vaccine":
+        return vaccineName;
+      case "allergy":
+        return allergyName;
+      case "lab":
+        return labName;
+      default:
+        return "";
+    }
+  };
+
+  const handleNameChange = (value: string) => {
+    switch (recordType) {
+      case "vaccine":
+        setVaccineName(value);
+        break;
+      case "allergy":
+        setAllergyName(value);
+        break;
+      case "lab":
+        setLabName(value);
+        break;
+    }
+  };
 
   return (
     <ScrollView style={[commonStyles.container, styles.container]}>
@@ -147,8 +213,8 @@ export default function AddRecordScreen({ route, navigation }: Props) {
       <View style={styles.form}>
         <Input
           label="Name"
-          value={name}
-          onChangeText={setName}
+          value={getCurrentName()}
+          onChangeText={handleNameChange}
           placeholder={`Enter ${recordType} name`}
           inputStyle={styles.inputText}
           inputContainerStyle={styles.inputContainer}
@@ -156,7 +222,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
           placeholderTextColor={customColors.secondaryText}
         />
 
-        {recordType === "vaccine" && renderDatePicker()}
+        {recordType === "vaccine" && renderVaccineDatePicker()}
 
         {recordType === "allergy" && (
           <>
@@ -187,12 +253,10 @@ export default function AddRecordScreen({ route, navigation }: Props) {
               ))}
             </View>
             <ButtonGroup
-              buttons={["Mild", "Moderate", "Severe"]}
-              selectedIndex={["mild", "moderate", "severe"].indexOf(severity)}
+              buttons={["Mild", "Severe"]}
+              selectedIndex={["mild", "severe"].indexOf(severity)}
               onPress={(index) =>
-                setSeverity(
-                  ["mild", "moderate", "severe"][index] as AllergySeverity
-                )
+                setSeverity(["mild", "severe"][index] as AllergySeverity)
               }
               containerStyle={styles.severityGroup}
               selectedButtonStyle={styles.selectedButton}
@@ -204,12 +268,11 @@ export default function AddRecordScreen({ route, navigation }: Props) {
 
         {recordType === "lab" && (
           <>
-            {renderDatePicker()}
             <Input
               label="Dosage"
               value={dosage}
               onChangeText={setDosage}
-              placeholder="Enter dosage"
+              placeholder="Enter dosage (e.g. 3.35 mg)"
               inputStyle={styles.inputText}
               inputContainerStyle={styles.inputContainer}
               labelStyle={styles.label}
@@ -219,7 +282,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
               label="Instructions"
               value={instructions}
               onChangeText={setInstructions}
-              placeholder="Enter instructions"
+              placeholder="Enter instructions (e.g. Take twice a day for a week with food)"
               multiline
               numberOfLines={3}
               inputStyle={[styles.inputText, styles.multilineInput]}
@@ -235,10 +298,12 @@ export default function AddRecordScreen({ route, navigation }: Props) {
 
         <Button
           title="Add Record"
-          onPress={handleAddRecord}
-          containerStyle={styles.submitButtonContainer}
+          onPress={handleSubmit}
           buttonStyle={styles.submitButton}
+          containerStyle={styles.submitButtonContainer}
           titleStyle={styles.submitButtonText}
+          loading={loading}
+          disabled={loading}
         />
       </View>
     </ScrollView>
@@ -371,14 +436,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderColor: customColors.border,
   },
-  submitButtonContainer: {
-    marginVertical: 20,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
   submitButton: {
     backgroundColor: customColors.buttonPrimary,
     paddingVertical: 12,
+    borderRadius: 12,
+  },
+  submitButtonContainer: {
+    marginTop: 20,
+    marginHorizontal: 10,
   },
   submitButtonText: {
     ...typography.button,

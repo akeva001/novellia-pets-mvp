@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, Alert } from "react-native";
 import { Button, Input, Text } from "@rneui/themed";
 import { useAppDispatch } from "../store";
 import { setUser } from "../store/userSlice";
@@ -7,22 +7,51 @@ import { User } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
+import * as api from "../api/client";
+import { setPets, setLoading, setError } from "../store/petsSlice";
 
 type Props = RootStackScreenProps<"Login">;
 
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleLogin = () => {
-    // TODO: Implement actual login logic
-    const mockUser: User = {
-      id: "1",
-      email,
-      name: "Test User",
-    };
-    dispatch(setUser(mockUser));
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = await api.login(email, password);
+
+      await dispatch(setUser(user));
+
+      try {
+        const pets = await api.getPets(user.id);
+        dispatch(setPets(pets));
+      } catch (error) {
+        console.error("Error fetching pets:", error);
+        dispatch(
+          setError(
+            error instanceof Error ? error.message : "Failed to fetch pets"
+          )
+        );
+      }
+
+      navigation.navigate("Dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to login"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,6 +109,8 @@ export default function LoginScreen({ navigation }: Props) {
               containerStyle={styles.buttonContainer}
               buttonStyle={styles.button}
               titleStyle={styles.buttonText}
+              loading={loading}
+              disabled={loading}
             />
             <Button
               title="Create Account"
@@ -110,7 +141,6 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginBottom: 40,
-    // flexDirection: "row",
   },
   logo: {
     width: 250,

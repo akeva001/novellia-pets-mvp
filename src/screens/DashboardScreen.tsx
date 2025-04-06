@@ -1,13 +1,23 @@
-import React from "react";
-import { View, StyleSheet, FlatList, Animated } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Animated,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { Button, Text, FAB } from "@rneui/themed";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppSelector, useAppDispatch } from "../store";
-import { deletePet } from "../store/petsSlice";
+import { setPets, deletePet } from "../store/petsSlice";
 import { Pet, AnimalTypeLabels } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
+import * as api from "../api/client";
+import { Icon } from "@rneui/themed";
 
 type Props = RootStackScreenProps<"Dashboard">;
 
@@ -15,32 +25,75 @@ export default function DashboardScreen({ navigation }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.user.user?.id);
   const pets = useAppSelector((state) => state.pets.pets);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleDeletePet = (petId: string) => {
-    dispatch(deletePet(petId));
+  const fetchPets = async () => {
+    if (!userId) return;
+
+    try {
+      console.log("Fetching pets for user:", userId);
+      const fetchedPets = await api.getPets(userId);
+      console.log("Fetched pets:", fetchedPets);
+      dispatch(setPets(fetchedPets));
+    } catch (error) {
+      console.error("Error fetching pets:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to fetch pets"
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Dashboard pets:", pets);
+    fetchPets();
+  }, [userId]);
+
+  const handleDeletePet = async (petId: string) => {
+    if (!userId) return;
+
+    try {
+      await api.deletePet(userId, petId);
+      dispatch(deletePet(petId));
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to delete pet"
+      );
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchPets();
   };
 
   const renderListHeader = () => (
     <Text style={styles.screenTitle}>My Pets</Text>
   );
 
-  const renderPet = ({ item: pet }: { item: Pet }) => (
-    <Animated.View style={styles.cardContainer}>
-      <LinearGradient
-        colors={["#e85a39", "#d14f30", "#ae3e23", "#842812"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.cardGradient}
-      >
-        <View style={styles.cardContent}>
-          <Text style={styles.petName}>{pet.name}</Text>
-          <View style={styles.petInfo}>
+  const renderPet = ({ item: pet }: { item: Pet }) => {
+    console.log("Rendering pet item:", pet);
+    return (
+      <Animated.View style={styles.cardContainer}>
+        <LinearGradient
+          colors={["#e85a39", "#d14f30", "#ae3e23", "#842812"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.cardGradient}
+        >
+          <View style={styles.cardContent}>
+            <Text style={styles.petName}>{pet.name}</Text>
             <View style={styles.infoRow}>
               <FontAwesome5
                 name={
-                  pet.animalType === "dog"
+                  pet.type === "dog"
                     ? "dog"
-                    : pet.animalType === "cat"
+                    : pet.type === "cat"
                     ? "cat"
                     : "dove"
                 }
@@ -48,9 +101,7 @@ export default function DashboardScreen({ navigation }: Props) {
                 color="white"
                 style={styles.infoIcon}
               />
-              <Text style={styles.infoText}>
-                Type: {AnimalTypeLabels[pet.animalType]}
-              </Text>
+              <Text style={styles.infoText}>Type: {pet.type || "Unknown"}</Text>
             </View>
             <View style={styles.infoRow}>
               <FontAwesome5
@@ -61,24 +112,28 @@ export default function DashboardScreen({ navigation }: Props) {
               />
               <Text style={styles.infoText}>Breed: {pet.breed}</Text>
             </View>
+            <View style={styles.cardActions}>
+              <Button
+                title="View Details"
+                onPress={() => navigation.navigate("PetDetails", { pet })}
+                buttonStyle={styles.viewButton}
+                containerStyle={styles.buttonContainer}
+                titleStyle={styles.buttonText}
+              />
+            </View>
           </View>
-          <View style={styles.cardActions}>
-            <Button
-              title="View Details"
-              onPress={() => navigation.navigate("PetDetails", { pet })}
-              buttonStyle={styles.viewButton}
-              containerStyle={styles.buttonContainer}
-              titleStyle={styles.buttonText}
-            />
-          </View>
-        </View>
-      </LinearGradient>
-    </Animated.View>
-  );
+        </LinearGradient>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={[commonStyles.container, styles.container]}>
-      {pets.length === 0 ? (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primary} />
+        </View>
+      ) : pets.length === 0 ? (
         <View style={styles.emptyState}>
           <FontAwesome5
             name="paw"
@@ -99,6 +154,8 @@ export default function DashboardScreen({ navigation }: Props) {
           keyExtractor={(pet) => pet.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
       )}
       <FAB
@@ -164,13 +221,10 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
     fontFamily: "PublicSans-Bold",
   },
-  petInfo: {
-    marginBottom: 20,
-    gap: 8,
-  },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 12,
   },
   infoIcon: {
     width: 24,
@@ -240,5 +294,10 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderColor: "#fff",
     borderWidth: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

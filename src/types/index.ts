@@ -17,16 +17,19 @@ export interface User {
 
 export interface Pet {
   id: string;
-  userId: string;
   name: string;
-  animalType: AnimalType;
+  type: AnimalType;
   breed: string;
+  userId: string;
   dateOfBirth: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Vaccine {
   id: string;
   petId: string;
+  type: "vaccine";
   name: string;
   dateAdministered: string;
 }
@@ -34,6 +37,7 @@ export interface Vaccine {
 export interface Allergy {
   id: string;
   petId: string;
+  type: "allergy";
   name: string;
   reactions: AllergyReaction[];
   severity: AllergySeverity;
@@ -42,6 +46,7 @@ export interface Allergy {
 export interface Lab {
   id: string;
   petId: string;
+  type: "lab";
   name: string;
   dosage: string;
   instructions: string;

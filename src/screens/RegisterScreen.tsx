@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
 import { Button, Input, Text } from "@rneui/themed";
 import { useAppDispatch } from "../store";
 import { setUser } from "../store/userSlice";
@@ -7,6 +7,8 @@ import { User } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
+import * as api from "../api/client";
+import { setPets, setLoading, setError } from "../store/petsSlice";
 
 type Props = RootStackScreenProps<"Register">;
 
@@ -14,16 +16,29 @@ export default function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleRegister = () => {
-    // TODO: Implement actual registration logic
-    const mockUser: User = {
-      id: "1",
-      email,
-      name,
-    };
-    dispatch(setUser(mockUser));
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = await api.register(email, password, name);
+      dispatch(setUser(user));
+      navigation.navigate("Dashboard");
+    } catch (error) {
+      console.error("Register error:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to register"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,6 +103,8 @@ export default function RegisterScreen({ navigation }: Props) {
               containerStyle={styles.buttonContainer}
               buttonStyle={styles.button}
               titleStyle={styles.buttonText}
+              loading={loading}
+              disabled={loading}
             />
             <Button
               title="Already have an account? Login"

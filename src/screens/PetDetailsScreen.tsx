@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
   FlatList,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Text, Button, Icon } from "@rneui/themed";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -15,26 +16,55 @@ import {
   AnimalTypeLabels,
   AnimalTypeIcons,
 } from "../types";
-import { deleteRecord } from "../store/medicalRecordsSlice";
+import { setRecords, deleteRecord } from "../store/medicalRecordsSlice";
 import { deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
+import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"PetDetails">;
 
 export default function PetDetailsScreen({ route, navigation }: Props) {
   const { pet } = route.params;
+  const userId = useAppSelector((state) => state.user.user?.id);
   const allRecords = useAppSelector((state) => state.medicalRecords.records);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useAppDispatch();
 
-  // Memoize the filtered records
   const records = useMemo(() => {
     return allRecords.filter((record) => record.petId === pet.id);
   }, [allRecords, pet.id]);
 
-  const dispatch = useAppDispatch();
+  const fetchRecords = async () => {
+    if (!userId) return;
 
-  const handleDeleteRecord = (recordId: string) => {
+    try {
+      console.log("Fetching records for pet:", pet.id);
+      const fetchedRecords = await api.getRecords(userId, pet.id);
+      console.log("Fetched records:", fetchedRecords);
+      dispatch(setRecords(fetchedRecords));
+    } catch (error) {
+      console.error("Error fetching records:", error);
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to fetch records"
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Pet details:", pet);
+    fetchRecords();
+  }, [userId, pet.id]);
+
+  const handleDeleteRecord = async (recordId: string) => {
+    if (!userId) return;
+
     Alert.alert(
       "Remove Record",
       "Are you sure you want to remove this medical record?",
@@ -43,13 +73,27 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => dispatch(deleteRecord(recordId)),
+          onPress: async () => {
+            try {
+              await api.deleteRecord(userId, recordId);
+              dispatch(deleteRecord(recordId));
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                error instanceof Error
+                  ? error.message
+                  : "Failed to delete record"
+              );
+            }
+          },
         },
       ]
     );
   };
 
   const handleRemovePet = () => {
+    if (!userId) return;
+
     Alert.alert(
       "Remove from Records",
       `Are you sure you want to remove ${pet.name} from your records? This action cannot be undone.`,
@@ -58,13 +102,26 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => {
-            dispatch(deletePet(pet.id));
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              await api.deletePet(userId, pet.id);
+              dispatch(deletePet(pet.id));
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                error instanceof Error ? error.message : "Failed to delete pet"
+              );
+            }
           },
         },
       ]
     );
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchRecords();
   };
 
   const renderRecordCard = ({ item }: { item: MedicalRecord }) => (
@@ -85,6 +142,7 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
           />
         </View>
         <View style={styles.recordDetails}>
+          <Text style={styles.recordText}>Type: {item.type}</Text>
           {"dateAdministered" in item && (
             <Text style={styles.recordText}>
               Date: {new Date(item.dateAdministered).toLocaleDateString()}
@@ -120,18 +178,12 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
           <View style={styles.infoRow}>
             <FontAwesome5
               name={
-                pet.animalType === "dog"
-                  ? "dog"
-                  : pet.animalType === "cat"
-                  ? "cat"
-                  : "dove"
+                pet.type === "dog" ? "dog" : pet.type === "cat" ? "cat" : "dove"
               }
               size={20}
               color={customColors.primary}
             />
-            <Text style={styles.infoText}>
-              Type: {AnimalTypeLabels[pet.animalType]}
-            </Text>
+            <Text style={styles.infoText}>Type: {pet.type || "Unknown"}</Text>
           </View>
           <View style={styles.infoRow}>
             <Icon name="info" color={customColors.primary} size={20} />
@@ -166,17 +218,25 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
 
   return (
     <View style={[commonStyles.container, styles.container]}>
-      <FlatList
-        data={records}
-        renderItem={renderRecordCard}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderListHeader}
-        contentContainerStyle={[
-          styles.list,
-          records.length === 0 && styles.emptyList,
-        ]}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={records}
+          renderItem={renderRecordCard}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderListHeader}
+          contentContainerStyle={[
+            styles.list,
+            records.length === 0 && styles.emptyList,
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
 
       <View style={styles.bottomActions}>
         <Button
@@ -201,14 +261,8 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
         >
           <Button
             title="Add Record"
-            icon={{
-              name: "add",
-              type: "material",
-              size: 20,
-              color: "white",
-            }}
             onPress={() => navigation.navigate("AddRecord", { petId: pet.id })}
-            buttonStyle={styles.addButton}
+            buttonStyle={{ backgroundColor: "transparent" }}
             titleStyle={styles.addButtonText}
           />
         </LinearGradient>
@@ -377,5 +431,10 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     ...typography.button,
     color: customColors.error,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
