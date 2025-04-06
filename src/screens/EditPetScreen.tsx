@@ -15,6 +15,8 @@ import { useAppSelector, useAppDispatch } from "../store";
 import { updatePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
+import { AnimalType, AnimalTypeLabels } from "../types";
+import AnimatedDropdown from "../components/AnimatedDropdown";
 import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"EditPet">;
@@ -25,9 +27,17 @@ export default function EditPetScreen({ route, navigation }: Props) {
   const dispatch = useAppDispatch();
 
   const [name, setName] = useState(pet.name);
+  const [type, setType] = useState<AnimalType>(pet.type);
   const [breed, setBreed] = useState(pet.breed);
   const [dateOfBirth, setDateOfBirth] = useState(new Date(pet.dateOfBirth));
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const animalTypeOptions = Object.entries(AnimalTypeLabels).map(
+    ([value, label]) => ({
+      label,
+      value,
+    })
+  );
 
   const handleSave = async () => {
     if (!userId) return;
@@ -36,6 +46,7 @@ export default function EditPetScreen({ route, navigation }: Props) {
       const updatedPet = {
         ...pet,
         name,
+        type,
         breed,
         dateOfBirth: dateOfBirth.toISOString(),
       };
@@ -74,6 +85,14 @@ export default function EditPetScreen({ route, navigation }: Props) {
           inputContainerStyle={styles.inputContainer}
           labelStyle={styles.label}
           placeholderTextColor={customColors.secondaryText}
+        />
+
+        <Text style={[styles.label, { marginLeft: 10 }]}>Animal Type</Text>
+        <AnimatedDropdown
+          options={animalTypeOptions}
+          value={type}
+          onSelect={(value) => setType(value as AnimalType)}
+          placeholder="Select an animal type"
         />
 
         <Input

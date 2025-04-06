@@ -8,8 +8,6 @@ import {
   Pressable,
 } from "react-native";
 import { Text, Input, Button, Icon } from "@rneui/themed";
-import RNPickerSelect from "react-native-picker-select";
-import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppDispatch, useAppSelector } from "../store";
 import { addPet, deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
@@ -17,6 +15,7 @@ import { AnimalType, AnimalTypeLabels } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import AnimatedDropdown from "../components/AnimatedDropdown";
 import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"AddPet">;
@@ -38,7 +37,7 @@ export default function AddPetScreen({ navigation, route }: Props) {
   const animalTypeOptions = Object.entries(AnimalTypeLabels).map(
     ([value, label]) => ({
       label,
-      value: value as AnimalType,
+      value,
     })
   );
 
@@ -136,32 +135,12 @@ export default function AddPetScreen({ navigation, route }: Props) {
         />
 
         <Text style={[styles.label, { marginLeft: 10 }]}>Animal Type</Text>
-        <View style={styles.pickerContainer}>
-          <RNPickerSelect
-            onValueChange={(value) => {
-              if (value) setType(value as AnimalType);
-            }}
-            items={animalTypeOptions}
-            value={type}
-            useNativeAndroidPickerStyle={false}
-            placeholder={{
-              label: "Select an animal type",
-              value: undefined,
-              color: customColors.secondaryText,
-            }}
-            style={{
-              ...pickerSelectStyles,
-            }}
-            Icon={() => (
-              <Icon
-                name="arrow-drop-down"
-                type="material"
-                size={24}
-                color={customColors.text}
-              />
-            )}
-          />
-        </View>
+        <AnimatedDropdown
+          options={animalTypeOptions}
+          value={type}
+          onSelect={(value) => setType(value as AnimalType)}
+          placeholder="Select an animal type"
+        />
 
         <Input
           label="Breed"
@@ -218,54 +197,6 @@ export default function AddPetScreen({ navigation, route }: Props) {
     </ScrollView>
   );
 }
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 0,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: customColors.inputBackground,
-    borderRadius: 12,
-    color: customColors.text,
-    backgroundColor: customColors.inputBackground,
-    paddingRight: 30,
-    height: 48,
-    textAlignVertical: "center",
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingVertical: 0,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: customColors.inputBackground,
-    borderRadius: 12,
-    color: customColors.text,
-    backgroundColor: customColors.inputBackground,
-    paddingRight: 30,
-    height: 48,
-    textAlignVertical: "center",
-  },
-  placeholder: {
-    color: customColors.secondaryText,
-  },
-  iconContainer: {
-    top: 12,
-    right: 12,
-    height: 24,
-    width: 24,
-  },
-  viewContainer: {
-    marginBottom: 16,
-    backgroundColor: customColors.inputBackground,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-});
 
 const styles = StyleSheet.create({
   container: {
