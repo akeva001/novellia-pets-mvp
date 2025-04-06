@@ -175,7 +175,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 validatePassword(text);
               }}
               secureTextEntry
-              textContentType="none"
+              textContentType="oneTimeCode"
               autoComplete="off"
               inputStyle={styles.inputText}
               inputContainerStyle={[
@@ -200,7 +200,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 validateConfirmPassword(text);
               }}
               secureTextEntry
-              textContentType="none"
+              textContentType="oneTimeCode"
               autoComplete="off"
               inputStyle={styles.inputText}
               inputContainerStyle={[
