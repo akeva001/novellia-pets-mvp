@@ -26,26 +26,34 @@ export interface Pet {
   updatedAt: string;
 }
 
-export interface Vaccine {
+export interface Attachment {
+  id: string;
+  uri: string;
+  type: string;
+  name: string;
+  timestamp: string;
+}
+
+export interface BaseRecord {
   id: string;
   petId: string;
+  attachments?: Attachment[];
+}
+
+export interface Vaccine extends BaseRecord {
   type: "vaccine";
   name: string;
   dateAdministered: string;
 }
 
-export interface Allergy {
-  id: string;
-  petId: string;
+export interface Allergy extends BaseRecord {
   type: "allergy";
   name: string;
   reactions: AllergyReaction[];
   severity: AllergySeverity;
 }
 
-export interface Lab {
-  id: string;
-  petId: string;
+export interface Lab extends BaseRecord {
   type: "lab";
   name: string;
   dosage: number;

@@ -19,9 +19,13 @@ import {
   Vaccine,
   Allergy,
   Lab,
+  Attachment,
 } from "../types";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as api from "../api/client";
+import AttachmentSection from "../components/AttachmentSection";
+import FormInput from "../components/FormInput";
+import GradientButton from "../components/GradientButton";
 
 type Props = RootStackScreenProps<"EditRecord">;
 
@@ -50,6 +54,10 @@ export default function EditRecordScreen({ navigation, route }: Props) {
   );
   const [severity, setSeverity] = useState<AllergySeverity>(
     "severity" in record ? record.severity : "mild"
+  );
+
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    "attachments" in record ? record.attachments || [] : []
   );
 
   const handleDosageChange = (value: string) => {
@@ -81,7 +89,7 @@ export default function EditRecordScreen({ navigation, route }: Props) {
 
     try {
       setLoading(true);
-      let updates: Partial<Vaccine | Allergy | Lab> = { name };
+      let updates: Partial<Vaccine | Allergy | Lab> = { name, attachments };
 
       switch (record.type) {
         case "vaccine":
@@ -202,15 +210,12 @@ export default function EditRecordScreen({ navigation, route }: Props) {
       </Text>
 
       <View style={styles.form}>
-        <Input
+        <FormInput
           label="Name"
           value={name}
           onChangeText={setName}
           placeholder={`Enter ${record.type} name`}
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         {record.type === "vaccine" && (
@@ -243,22 +248,12 @@ export default function EditRecordScreen({ navigation, route }: Props) {
             <Text style={[styles.label, { marginLeft: 10 }]}>Reactions</Text>
             <View style={styles.reactionsContainer}>
               {["rash", "swelling", "breathing", "other"].map((reaction) => (
-                <Button
+                <GradientButton
                   key={reaction}
                   title={reaction}
-                  type={reactions.includes(reaction) ? "solid" : "outline"}
+                  variant={reactions.includes(reaction) ? "primary" : "white"}
                   onPress={() => toggleReaction(reaction as AllergyReaction)}
                   containerStyle={styles.reactionButton}
-                  buttonStyle={
-                    reactions.includes(reaction)
-                      ? styles.selectedReactionButton
-                      : styles.outlineButton
-                  }
-                  titleStyle={
-                    reactions.includes(reaction)
-                      ? styles.selectedButtonText
-                      : styles.outlineButtonText
-                  }
                 />
               ))}
             </View>
@@ -278,59 +273,49 @@ export default function EditRecordScreen({ navigation, route }: Props) {
 
         {record.type === "lab" && (
           <>
-            <Input
+            <FormInput
               label="Dosage"
               value={dosage}
               onChangeText={handleDosageChange}
               placeholder="Enter dosage (e.g. 3.35)"
               keyboardType="decimal-pad"
-              inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
+              isDark={true}
             />
-            <Input
+            <FormInput
               label="Instructions"
               value={instructions}
               onChangeText={setInstructions}
               placeholder="Enter instructions (e.g. Take twice a day for a week with food)"
               multiline
               numberOfLines={3}
-              inputStyle={[styles.inputText, styles.multilineInput]}
-              inputContainerStyle={[
-                styles.inputContainer,
-                styles.multilineContainer,
-              ]}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
+              isDark={true}
+              inputStyle={styles.multilineInput}
+              inputContainerStyle={styles.multilineContainer}
             />
           </>
         )}
 
+        <AttachmentSection
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+        />
+
         <View style={styles.bottomActions}>
-          <Button
+          <GradientButton
             title="Delete Record"
             onPress={handleDelete}
-            buttonStyle={styles.deleteButton}
+            variant="white"
             titleStyle={styles.deleteButtonText}
-            disabled={loading}
+            containerStyle={styles.actionButtonContainer}
           />
 
-          <LinearGradient
-            colors={["#d14f30", "#e85a39"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.saveButtonGradient}
-          >
-            <Button
-              title="Save Changes"
-              onPress={handleSubmit}
-              buttonStyle={styles.submitButton}
-              titleStyle={styles.submitButtonText}
-              loading={loading}
-              disabled={loading}
-            />
-          </LinearGradient>
+          <GradientButton
+            title="Save Changes"
+            onPress={handleSubmit}
+            loading={loading}
+            disabled={loading}
+            containerStyle={styles.actionButtonContainer}
+          />
         </View>
       </View>
     </ScrollView>
@@ -351,20 +336,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  inputContainer: {
-    borderBottomWidth: 0,
-    backgroundColor: customColors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
+  label: {
+    ...typography.h3,
+    color: customColors.primary,
+    marginBottom: 8,
   },
   dateInputContainer: {
     backgroundColor: customColors.inputBackground,
@@ -384,17 +359,6 @@ const styles = StyleSheet.create({
     ...typography.body1,
     color: customColors.text,
   },
-  inputText: {
-    ...typography.body1,
-    color: customColors.text,
-    textAlignVertical: "center",
-    height: 48,
-  },
-  label: {
-    ...typography.h3,
-    color: customColors.primary,
-    marginBottom: 8,
-  },
   reactionsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -405,29 +369,6 @@ const styles = StyleSheet.create({
   reactionButton: {
     width: "48%",
     marginBottom: 12,
-    borderRadius: 12,
-  },
-  selectedReactionButton: {
-    backgroundColor: customColors.buttonPrimary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    height: 48,
-    borderRadius: 12,
-  },
-  outlineButton: {
-    backgroundColor: "white",
-    borderColor: customColors.border,
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    height: 48,
-    borderRadius: 12,
-  },
-  outlineButtonText: {
-    ...typography.button,
-    color: customColors.text,
-    fontSize: 16,
-    textAlign: "center",
   },
   severityGroup: {
     marginBottom: 20,
@@ -462,28 +403,10 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 32,
   },
-  saveButtonGradient: {
+  actionButtonContainer: {
     flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  submitButton: {
-    backgroundColor: "transparent",
-    paddingVertical: 14,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: "white",
-    fontSize: 17,
-  },
-  deleteButton: {
-    backgroundColor: "rgba(220, 38, 38, 0.1)",
-    paddingVertical: 14,
-    flex: 1,
-    borderRadius: 12,
   },
   deleteButtonText: {
-    ...typography.button,
     color: customColors.error,
   },
 });

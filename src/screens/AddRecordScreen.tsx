@@ -18,10 +18,14 @@ import {
   AllergyReaction,
   AllergySeverity,
   RecordType,
+  Attachment,
 } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as api from "../api/client";
+import AttachmentSection from "../components/AttachmentSection";
+import FormInput from "../components/FormInput";
+import GradientButton from "../components/GradientButton";
 
 type Props = RootStackScreenProps<"AddRecord">;
 
@@ -44,6 +48,8 @@ export default function AddRecordScreen({ route, navigation }: Props) {
   const [labName, setLabName] = useState<string>("");
   const [dosage, setDosage] = useState<string>("");
   const [instructions, setInstructions] = useState<string>("");
+
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const onVaccineDateChange = (event: any, selectedDate?: Date) => {
     setShowVaccineDatePicker(Platform.OS === "ios");
@@ -82,6 +88,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             type: "vaccine",
             name: vaccineName,
             dateAdministered: vaccineDate.toISOString(),
+            attachments,
           };
           break;
 
@@ -101,6 +108,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             name: allergyName,
             reactions,
             severity,
+            attachments,
           };
           break;
 
@@ -124,6 +132,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             name: labName,
             dosage: parseFloat(dosage) || 0,
             instructions,
+            attachments,
           };
           break;
       }
@@ -219,15 +228,12 @@ export default function AddRecordScreen({ route, navigation }: Props) {
         selectedTextStyle={styles.selectedButtonText}
       />
       <View style={styles.form}>
-        <Input
+        <FormInput
           label="Name"
           value={getCurrentName()}
           onChangeText={handleNameChange}
           placeholder={`Enter ${recordType} name`}
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         {recordType === "vaccine" && renderVaccineDatePicker()}
@@ -237,26 +243,16 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             <Text style={[styles.label, { marginLeft: 10 }]}>Reactions</Text>
             <View style={styles.reactionsContainer}>
               {["rash", "swelling", "breathing", "other"].map((reaction) => (
-                <Button
+                <GradientButton
                   key={reaction}
                   title={reaction}
-                  type={
+                  variant={
                     reactions.includes(reaction as AllergyReaction)
-                      ? "solid"
-                      : "outline"
+                      ? "primary"
+                      : "white"
                   }
                   onPress={() => toggleReaction(reaction as AllergyReaction)}
                   containerStyle={styles.reactionButton}
-                  buttonStyle={
-                    reactions.includes(reaction as AllergyReaction)
-                      ? styles.selectedReactionButton
-                      : styles.outlineButton
-                  }
-                  titleStyle={
-                    reactions.includes(reaction as AllergyReaction)
-                      ? styles.selectedButtonText
-                      : styles.outlineButtonText
-                  }
                 />
               ))}
             </View>
@@ -276,43 +272,39 @@ export default function AddRecordScreen({ route, navigation }: Props) {
 
         {recordType === "lab" && (
           <>
-            <Input
+            <FormInput
               label="Dosage"
               value={dosage}
               onChangeText={handleDosageChange}
               placeholder="Enter dosage (e.g. 3.35)"
               keyboardType="decimal-pad"
-              inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
+              isDark={true}
             />
-            <Input
+            <FormInput
               label="Instructions"
               value={instructions}
               onChangeText={setInstructions}
               placeholder="Enter instructions (e.g. Take twice a day for a week with food)"
               multiline
               numberOfLines={3}
-              inputStyle={[styles.inputText, styles.multilineInput]}
-              inputContainerStyle={[
-                styles.inputContainer,
-                styles.multilineContainer,
-              ]}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
+              isDark={true}
+              inputStyle={styles.multilineInput}
+              inputContainerStyle={styles.multilineContainer}
             />
           </>
         )}
 
-        <Button
+        <AttachmentSection
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+        />
+
+        <GradientButton
           title="Add Record"
           onPress={handleSubmit}
-          buttonStyle={styles.submitButton}
-          containerStyle={styles.submitButtonContainer}
-          titleStyle={styles.submitButtonText}
           loading={loading}
           disabled={loading}
+          containerStyle={styles.submitButtonContainer}
         />
       </View>
     </ScrollView>
@@ -352,26 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
-  inputContainer: {
-    borderBottomWidth: 0,
-    backgroundColor: customColors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  multilineContainer: {
-    height: 100,
-    alignItems: "flex-start",
-    justifyContent: "flex-start",
-  },
   dateInputContainer: {
     backgroundColor: customColors.inputBackground,
     borderRadius: 12,
@@ -390,17 +362,6 @@ const styles = StyleSheet.create({
     ...typography.body1,
     color: customColors.text,
   },
-  inputText: {
-    ...typography.body1,
-    color: customColors.text,
-    textAlignVertical: "center",
-    height: 48,
-  },
-  multilineInput: {
-    height: 100,
-    textAlignVertical: "top",
-    paddingTop: 12,
-  },
   label: {
     ...typography.h3,
     color: customColors.primary,
@@ -416,47 +377,24 @@ const styles = StyleSheet.create({
   reactionButton: {
     width: "48%",
     marginBottom: 12,
-    borderRadius: 12,
-  },
-  selectedReactionButton: {
-    backgroundColor: customColors.buttonPrimary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    height: 48,
-    borderRadius: 12,
-  },
-  outlineButton: {
-    backgroundColor: "white",
-    borderColor: customColors.border,
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    height: 48,
-    borderRadius: 12,
-  },
-  outlineButtonText: {
-    ...typography.button,
-    color: customColors.text,
-    fontSize: 16,
-    textAlign: "center",
   },
   severityGroup: {
     marginBottom: 20,
     borderRadius: 8,
     borderColor: customColors.border,
   },
-  submitButton: {
-    backgroundColor: customColors.buttonPrimary,
-    paddingVertical: 12,
-    borderRadius: 12,
+  multilineInput: {
+    height: 100,
+    textAlignVertical: "top",
+    paddingTop: 12,
+  },
+  multilineContainer: {
+    height: 100,
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
   },
   submitButtonContainer: {
     marginTop: 20,
     marginHorizontal: 10,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: "white",
-    fontSize: 17,
   },
 });

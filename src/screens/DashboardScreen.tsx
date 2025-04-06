@@ -6,18 +6,16 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
 import { Button, Text, FAB } from "@rneui/themed";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppSelector, useAppDispatch } from "../store";
 import { setPets, deletePet } from "../store/petsSlice";
-import { Pet, AnimalTypeLabels } from "../types";
+import { Pet } from "../types";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import * as api from "../api/client";
-import { Icon } from "@rneui/themed";
 
 type Props = RootStackScreenProps<"Dashboard">;
 

@@ -4,12 +4,10 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
 } from "react-native";
-import { Text, Button, Input } from "@rneui/themed";
-import { LinearGradient } from "expo-linear-gradient";
+import { Text } from "@rneui/themed";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAppSelector, useAppDispatch } from "../store";
 import { updatePet } from "../store/petsSlice";
@@ -17,6 +15,8 @@ import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
 import { AnimalType, AnimalTypeLabels } from "../types";
 import AnimatedDropdown from "../components/AnimatedDropdown";
+import FormInput from "../components/FormInput";
+import GradientButton from "../components/GradientButton";
 import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"EditPet">;
@@ -76,15 +76,12 @@ export default function EditPetScreen({ route, navigation }: Props) {
       </Text>
 
       <View style={styles.form}>
-        <Input
+        <FormInput
           label="Name"
           value={name}
           onChangeText={setName}
           placeholder="Enter pet name"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         <Text style={[styles.label, { marginLeft: 10 }]}>Animal Type</Text>
@@ -95,15 +92,12 @@ export default function EditPetScreen({ route, navigation }: Props) {
           placeholder="Select an animal type"
         />
 
-        <Input
+        <FormInput
           label="Breed"
           value={breed}
           onChangeText={setBreed}
           placeholder="Enter breed"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
@@ -128,27 +122,18 @@ export default function EditPetScreen({ route, navigation }: Props) {
         )}
 
         <View style={styles.bottomActions}>
-          <Button
+          <GradientButton
             title="Cancel"
             onPress={() => navigation.goBack()}
-            buttonStyle={styles.cancelButton}
-            titleStyle={styles.cancelButtonText}
+            variant="white"
             containerStyle={styles.actionButtonContainer}
           />
 
-          <LinearGradient
-            colors={["#d14f30", "#e85a39"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.saveButtonGradient}
-          >
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              buttonStyle={styles.submitButton}
-              titleStyle={styles.submitButtonText}
-            />
-          </LinearGradient>
+          <GradientButton
+            title="Save Changes"
+            onPress={handleSave}
+            containerStyle={styles.actionButtonContainer}
+          />
         </View>
       </View>
     </ScrollView>
@@ -168,27 +153,6 @@ const styles = StyleSheet.create({
   form: {
     paddingHorizontal: 20,
     marginBottom: 24,
-  },
-  inputContainer: {
-    borderBottomWidth: 0,
-    backgroundColor: customColors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inputText: {
-    ...typography.body1,
-    color: customColors.text,
-    textAlignVertical: "center",
-    height: 48,
   },
   label: {
     ...typography.h3,
@@ -220,28 +184,5 @@ const styles = StyleSheet.create({
   },
   actionButtonContainer: {
     flex: 1,
-  },
-  cancelButton: {
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  cancelButtonText: {
-    ...typography.button,
-    color: customColors.text,
-  },
-  saveButtonGradient: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  submitButton: {
-    backgroundColor: "transparent",
-    paddingVertical: 14,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: "white",
-    fontSize: 17,
   },
 });

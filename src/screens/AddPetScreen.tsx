@@ -7,15 +7,16 @@ import {
   Platform,
   Pressable,
 } from "react-native";
-import { Text, Input, Button, Icon } from "@rneui/themed";
+import { Text } from "@rneui/themed";
 import { useAppDispatch, useAppSelector } from "../store";
 import { addPet, deletePet } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { AnimalType, AnimalTypeLabels } from "../types";
 import { commonStyles, customColors, typography } from "../theme";
-import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AnimatedDropdown from "../components/AnimatedDropdown";
+import FormInput from "../components/FormInput";
+import GradientButton from "../components/GradientButton";
 import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"AddPet">;
@@ -123,15 +124,12 @@ export default function AddPetScreen({ navigation, route }: Props) {
       </Text>
 
       <View style={styles.form}>
-        <Input
+        <FormInput
           label="Pet Name"
           value={name}
           onChangeText={setName}
           placeholder="Enter pet name"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         <Text style={[styles.label, { marginLeft: 10 }]}>Animal Type</Text>
@@ -142,15 +140,12 @@ export default function AddPetScreen({ navigation, route }: Props) {
           placeholder="Select an animal type"
         />
 
-        <Input
+        <FormInput
           label="Breed"
           value={breed}
           onChangeText={setBreed}
           placeholder="Enter breed"
-          inputStyle={styles.inputText}
-          inputContainerStyle={styles.inputContainer}
-          labelStyle={styles.label}
-          placeholderTextColor={customColors.secondaryText}
+          isDark={true}
         />
 
         <Text style={[styles.label, { marginLeft: 10, marginBottom: 8 }]}>
@@ -174,23 +169,21 @@ export default function AddPetScreen({ navigation, route }: Props) {
           />
         )}
 
-        <Button
+        <GradientButton
           title={existingPet ? "Save Changes" : "Add Pet"}
           onPress={handleSubmit}
-          buttonStyle={styles.submitButton}
-          titleStyle={styles.submitButtonText}
           loading={loading}
           disabled={loading}
           containerStyle={styles.submitButtonContainer}
         />
 
         {existingPet && (
-          <Button
+          <GradientButton
             title="Delete Pet"
             onPress={handleDelete}
-            buttonStyle={styles.deleteButton}
-            titleStyle={styles.deleteButtonText}
+            variant="white"
             containerStyle={styles.deleteButtonContainer}
+            titleStyle={styles.deleteButtonText}
           />
         )}
       </View>
@@ -216,24 +209,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 24,
   },
-  inputContainer: {
-    borderBottomWidth: 0,
-    backgroundColor: customColors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   dateInputContainer: {
     backgroundColor: customColors.inputBackground,
     borderRadius: 12,
@@ -252,53 +227,19 @@ const styles = StyleSheet.create({
     ...typography.body1,
     color: customColors.text,
   },
-  inputText: {
-    ...typography.body1,
-    color: customColors.text,
-    textAlignVertical: "center",
-    height: 40,
-  },
   label: {
     ...typography.h3,
     color: customColors.primary,
     marginBottom: 8,
   },
-  selectedAnimalContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingHorizontal: 8,
-    marginLeft: 5,
-  },
-  selectedAnimalText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: customColors.text,
-  },
-  submitButton: {
-    backgroundColor: customColors.buttonPrimary,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
   submitButtonContainer: {
     marginTop: 24,
     marginBottom: 16,
   },
-  submitButtonText: {
-    ...typography.button,
-    color: "white",
-    fontSize: 17,
-  },
-  deleteButton: {
-    backgroundColor: "rgba(220, 38, 38, 0.1)",
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  deleteButtonText: {
-    ...typography.button,
-    color: customColors.error,
-  },
   deleteButtonContainer: {
     marginTop: 8,
+  },
+  deleteButtonText: {
+    color: customColors.error,
   },
 });

@@ -265,6 +265,24 @@ app.post("/pets/:petId/records", authenticateUser, (req, res) => {
         break;
     }
 
+    // Validate attachments if present
+    if (record.attachments) {
+      if (!Array.isArray(record.attachments)) {
+        return res.status(400).json({ error: "Attachments must be an array" });
+      }
+
+      for (const attachment of record.attachments) {
+        if (
+          !attachment.id ||
+          !attachment.uri ||
+          !attachment.type ||
+          !attachment.name
+        ) {
+          return res.status(400).json({ error: "Invalid attachment format" });
+        }
+      }
+    }
+
     const recordId = Math.random().toString(36).substring(7);
     const now = new Date().toISOString();
     const newRecord = {
@@ -273,6 +291,7 @@ app.post("/pets/:petId/records", authenticateUser, (req, res) => {
       petId,
       createdAt: now,
       updatedAt: now,
+      attachments: record.attachments || [],
     };
 
     db.records.set(recordId, newRecord);
@@ -314,7 +333,32 @@ app.put("/records/:id", authenticateUser, (req, res) => {
       return res.status(404).json({ error: "Pet not found" });
     }
 
-    const updatedRecord = { ...record, ...req.body };
+    // Validate attachments if present
+    if (req.body.attachments) {
+      if (!Array.isArray(req.body.attachments)) {
+        return res.status(400).json({ error: "Attachments must be an array" });
+      }
+
+      for (const attachment of req.body.attachments) {
+        if (
+          !attachment.id ||
+          !attachment.uri ||
+          !attachment.type ||
+          !attachment.name
+        ) {
+          return res.status(400).json({ error: "Invalid attachment format" });
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
+    const updatedRecord = {
+      ...record,
+      ...req.body,
+      updatedAt: now,
+      attachments: req.body.attachments || record.attachments || [],
+    };
+
     db.records.set(id, updatedRecord);
     res.json(updatedRecord);
   } catch (error) {

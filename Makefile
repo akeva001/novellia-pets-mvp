@@ -48,12 +48,13 @@ start-server:
 stop-server:
 	kill `cat server.pid` && rm server.pid
 
-# Start both frontend and backend (in separate terminals)
-start-all:
-	trap 'kill %1; kill %2' SIGINT; \
-	node server.js & \
-	EXPO_USE_CUSTOM_PORTS=true npx expo start --tunnel --ios --clear & \
-	wait
+# Start both frontend and backend with setup (in separate terminals)
+start-all: setup
+	@echo "✨ Starting both frontend and backend servers..."
+	@(trap 'kill 0' SIGINT; \
+		make start-server & \
+		make start-ios & \
+		wait)
 
 # Help command
 help:
@@ -66,6 +67,6 @@ help:
 	@echo "  make ios-simulator - Open iOS simulator"
 	@echo "  make ios          - Full iOS setup and launch"
 	@echo "  make start-server - Start the backend server"
-	@echo "  make start-all    - Start both frontend and backend"
+	@echo "  make start-all    - Setup and start both frontend and backend"
 	@echo "  make stop-server  - Stop the backend server"
 	@echo "  make help         - Show this help message"

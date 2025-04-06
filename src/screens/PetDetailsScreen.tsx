@@ -6,23 +6,21 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  Image,
 } from "react-native";
 import { Text, Button, Icon } from "@rneui/themed";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppSelector, useAppDispatch } from "../store";
 import { useFocusEffect } from "@react-navigation/native";
-import {
-  Pet,
-  MedicalRecord,
-  AnimalTypeLabels,
-  AnimalTypeIcons,
-} from "../types";
+import { MedicalRecord } from "../types";
 import { setRecords, deleteRecord } from "../store/medicalRecordsSlice";
 import { deletePet, setPets } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import * as api from "../api/client";
+import ImageView from "react-native-image-viewing";
 
 type Props = RootStackScreenProps<"PetDetails">;
 
@@ -34,6 +32,10 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useAppDispatch();
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
+  const [selectedRecordImages, setSelectedRecordImages] = useState<
+    { uri: string }[]
+  >([]);
 
   // Get the latest pet data from Redux store
   const pet = useMemo(() => {
@@ -137,52 +139,85 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
     fetchPetAndRecords();
   };
 
-  const renderRecordCard = ({ item }: { item: MedicalRecord }) => (
-    <View style={styles.recordCard}>
-      <View style={styles.recordContent}>
-        <View style={styles.recordHeader}>
-          <Text style={styles.recordTitle}>{item.name}</Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() =>
-              navigation.navigate("EditRecord", { record: item, petId: pet.id })
-            }
-          >
-            <Icon
-              name="edit"
-              type="material"
-              size={20}
-              color={customColors.primary}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.recordDetails}>
-          <Text style={styles.recordText}>Type: {item.type}</Text>
-          {"dateAdministered" in item && (
-            <Text style={styles.recordText}>
-              Date: {new Date(item.dateAdministered).toLocaleDateString()}
-            </Text>
-          )}
-          {"reactions" in item && (
-            <>
+  const renderRecordCard = ({ item }: { item: MedicalRecord }) => {
+    const recordImages =
+      item.attachments?.filter((att) => att.type === "image") || [];
+
+    return (
+      <View style={styles.recordCard}>
+        <View style={styles.recordContent}>
+          <View style={styles.recordHeader}>
+            <Text style={styles.recordTitle}>{item.name}</Text>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() =>
+                navigation.navigate("EditRecord", {
+                  record: item,
+                  petId: pet.id,
+                })
+              }
+            >
+              <Icon
+                name="edit"
+                type="material"
+                size={20}
+                color={customColors.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.recordDetails}>
+            <Text style={styles.recordText}>Type: {item.type}</Text>
+            {"dateAdministered" in item && (
               <Text style={styles.recordText}>
-                Reactions: {item.reactions.join(", ")}
+                Date: {new Date(item.dateAdministered).toLocaleDateString()}
               </Text>
-              <Text style={styles.recordText}>Severity: {item.severity}</Text>
-            </>
-          )}
-          {"dosage" in item && (
-            <>
-              <Text style={styles.recordText}>Dosage: {item.dosage}</Text>
-              <Text style={styles.recordText}>
-                Instructions: {item.instructions}
-              </Text>
-            </>
-          )}
+            )}
+            {"reactions" in item && (
+              <>
+                <Text style={styles.recordText}>
+                  Reactions: {item.reactions.join(", ")}
+                </Text>
+                <Text style={styles.recordText}>Severity: {item.severity}</Text>
+              </>
+            )}
+            {"dosage" in item && (
+              <>
+                <Text style={styles.recordText}>Dosage: {item.dosage}</Text>
+                <Text style={styles.recordText}>
+                  Instructions: {item.instructions}
+                </Text>
+              </>
+            )}
+
+            {recordImages.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.attachmentList}
+              >
+                {recordImages.map((attachment, index) => (
+                  <TouchableOpacity
+                    key={attachment.id}
+                    onPress={() => {
+                      setSelectedRecordImages(
+                        recordImages.map((img) => ({ uri: img.uri }))
+                      );
+                      setSelectedImageIndex(index);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: attachment.uri }}
+                      style={styles.attachmentImage}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderListHeader = () => (
     <>
@@ -293,6 +328,13 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
           />
         </LinearGradient>
       </View>
+
+      <ImageView
+        images={selectedRecordImages}
+        imageIndex={selectedImageIndex}
+        visible={selectedImageIndex >= 0}
+        onRequestClose={() => setSelectedImageIndex(-1)}
+      />
     </View>
   );
 }
@@ -485,5 +527,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  attachmentList: {
+    marginTop: 12,
+  },
+  attachmentImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 8,
   },
 });
