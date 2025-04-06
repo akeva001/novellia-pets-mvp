@@ -10,16 +10,88 @@ import * as api from "../api/client";
 
 type Props = RootStackScreenProps<"Register">;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6;
+const MIN_NAME_LENGTH = 2;
+
 export default function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [nameError, setNameError] = useState("");
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
 
+  const validateName = (name: string) => {
+    if (!name) {
+      setNameError("Name is required");
+      return false;
+    }
+    if (name.length < MIN_NAME_LENGTH) {
+      setNameError(`Name must be at least ${MIN_NAME_LENGTH} characters`);
+      return false;
+    }
+    setNameError("");
+    return true;
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email) {
+      setEmailError("Email is required");
+      return false;
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) {
+      setPasswordError("Password is required");
+      return false;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setPasswordError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+      );
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+
+  const validateConfirmPassword = (confirmPass: string) => {
+    if (!confirmPass) {
+      setConfirmPasswordError("Please confirm your password");
+      return false;
+    }
+    if (confirmPass !== password) {
+      setConfirmPasswordError("Passwords do not match");
+      return false;
+    }
+    setConfirmPasswordError("");
+    return true;
+  };
+
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+    const isNameValid = validateName(name);
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
+
+    if (
+      !isNameValid ||
+      !isEmailValid ||
+      !isPasswordValid ||
+      !isConfirmPasswordValid
+    ) {
       return;
     }
 
@@ -27,6 +99,7 @@ export default function RegisterScreen({ navigation }: Props) {
     try {
       const user = await api.register(email, password, name);
       dispatch(setUser(user));
+      navigation.navigate("Dashboard");
     } catch (error) {
       console.error("Register error:", error);
       Alert.alert(
@@ -52,9 +125,17 @@ export default function RegisterScreen({ navigation }: Props) {
             <Input
               placeholder="Name"
               value={name}
-              onChangeText={setName}
+              onChangeText={(text) => {
+                setName(text);
+                validateName(text);
+              }}
               inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
+              inputContainerStyle={[
+                styles.inputContainer,
+                nameError ? styles.inputError : null,
+              ]}
+              errorMessage={nameError}
+              errorStyle={styles.errorText}
               placeholderTextColor="rgba(255, 255, 255, 0.6)"
               leftIcon={{
                 type: "material",
@@ -66,11 +147,19 @@ export default function RegisterScreen({ navigation }: Props) {
             <Input
               placeholder="Email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                validateEmail(text);
+              }}
               autoCapitalize="none"
               keyboardType="email-address"
               inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
+              inputContainerStyle={[
+                styles.inputContainer,
+                emailError ? styles.inputError : null,
+              ]}
+              errorMessage={emailError}
+              errorStyle={styles.errorText}
               placeholderTextColor="rgba(255, 255, 255, 0.6)"
               leftIcon={{
                 type: "material",
@@ -82,10 +171,41 @@ export default function RegisterScreen({ navigation }: Props) {
             <Input
               placeholder="Password"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                validatePassword(text);
+              }}
               secureTextEntry
               inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
+              inputContainerStyle={[
+                styles.inputContainer,
+                passwordError ? styles.inputError : null,
+              ]}
+              errorMessage={passwordError}
+              errorStyle={styles.errorText}
+              placeholderTextColor="rgba(255, 255, 255, 0.6)"
+              leftIcon={{
+                type: "material",
+                name: "lock",
+                color: "white",
+                size: 20,
+              }}
+            />
+            <Input
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                validateConfirmPassword(text);
+              }}
+              secureTextEntry
+              inputStyle={styles.inputText}
+              inputContainerStyle={[
+                styles.inputContainer,
+                confirmPasswordError ? styles.inputError : null,
+              ]}
+              errorMessage={confirmPasswordError}
+              errorStyle={styles.errorText}
               placeholderTextColor="rgba(255, 255, 255, 0.6)"
               leftIcon={{
                 type: "material",
@@ -181,5 +301,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "500",
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.8)",
+  },
+  errorText: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 12,
+    marginTop: 4,
+    textShadowColor: "rgba(0, 0, 0, 0.1)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
