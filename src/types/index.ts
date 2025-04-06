@@ -48,7 +48,7 @@ export interface Lab {
   petId: string;
   type: "lab";
   name: string;
-  dosage: string;
+  dosage: number;
   instructions: string;
 }
 

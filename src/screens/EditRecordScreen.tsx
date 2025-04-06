@@ -39,7 +39,9 @@ export default function EditRecordScreen({ navigation, route }: Props) {
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const [dosage, setDosage] = useState("dosage" in record ? record.dosage : "");
+  const [dosage, setDosage] = useState(
+    "dosage" in record ? record.dosage.toString() : ""
+  );
   const [instructions, setInstructions] = useState(
     "instructions" in record ? record.instructions : ""
   );
@@ -49,6 +51,14 @@ export default function EditRecordScreen({ navigation, route }: Props) {
   const [severity, setSeverity] = useState<AllergySeverity>(
     "severity" in record ? record.severity : "mild"
   );
+
+  const handleDosageChange = (value: string) => {
+    // Only allow numbers and one decimal point
+    const regex = /^\d*\.?\d*$/;
+    if (value === "" || regex.test(value)) {
+      setDosage(value);
+    }
+  };
 
   const handleSeverityChange = (value: string) => {
     if (value === "mild" || value === "severe") {
@@ -119,7 +129,7 @@ export default function EditRecordScreen({ navigation, route }: Props) {
           }
           updates = {
             ...updates,
-            dosage,
+            dosage: parseFloat(dosage) || 0,
             instructions,
           };
           break;
@@ -271,8 +281,9 @@ export default function EditRecordScreen({ navigation, route }: Props) {
             <Input
               label="Dosage"
               value={dosage}
-              onChangeText={setDosage}
-              placeholder="Enter dosage (e.g. 3.35 mg)"
+              onChangeText={handleDosageChange}
+              placeholder="Enter dosage (e.g. 3.35)"
+              keyboardType="decimal-pad"
               inputStyle={styles.inputText}
               inputContainerStyle={styles.inputContainer}
               labelStyle={styles.label}

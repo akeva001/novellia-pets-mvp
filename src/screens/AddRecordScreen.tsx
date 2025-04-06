@@ -52,6 +52,14 @@ export default function AddRecordScreen({ route, navigation }: Props) {
     }
   };
 
+  const handleDosageChange = (value: string) => {
+    // Only allow numbers and one decimal point
+    const regex = /^\d*\.?\d*$/;
+    if (value === "" || regex.test(value)) {
+      setDosage(value);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!userId) {
       Alert.alert("Error", "User not found");
@@ -114,7 +122,7 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             petId,
             type: "lab",
             name: labName,
-            dosage,
+            dosage: parseFloat(dosage) || 0,
             instructions,
           };
           break;
@@ -271,8 +279,9 @@ export default function AddRecordScreen({ route, navigation }: Props) {
             <Input
               label="Dosage"
               value={dosage}
-              onChangeText={setDosage}
-              placeholder="Enter dosage (e.g. 3.35 mg)"
+              onChangeText={handleDosageChange}
+              placeholder="Enter dosage (e.g. 3.35)"
+              keyboardType="decimal-pad"
               inputStyle={styles.inputText}
               inputContainerStyle={styles.inputContainer}
               labelStyle={styles.label}
