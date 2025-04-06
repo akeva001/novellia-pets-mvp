@@ -87,8 +87,7 @@ export default function DashboardScreen({ navigation }: Props) {
           style={styles.cardGradient}
         >
           <View style={styles.cardContent}>
-            <Text style={styles.petName}>{pet.name}</Text>
-            <View style={styles.infoRow}>
+            <View style={styles.nameRow}>
               <FontAwesome5
                 name={
                   pet.type === "dog"
@@ -97,11 +96,22 @@ export default function DashboardScreen({ navigation }: Props) {
                     ? "cat"
                     : "dove"
                 }
-                size={16}
+                size={30}
+                color="white"
+                style={styles.nameIcon}
+              />
+              <Text style={styles.petName}>{pet.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <FontAwesome5
+                name="birthday-cake"
+                size={14}
                 color="white"
                 style={styles.infoIcon}
               />
-              <Text style={styles.infoText}>Type: {pet.type || "Unknown"}</Text>
+              <Text style={styles.infoText}>
+                Born: {new Date(pet.dateOfBirth).toLocaleDateString()}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <FontAwesome5
@@ -211,15 +221,26 @@ const styles = StyleSheet.create({
   cardContent: {
     padding: 20,
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    justifyContent: "flex-start",
+  },
   petName: {
     fontSize: 24,
     fontWeight: "600",
     color: "white",
-    marginBottom: 16,
+    marginRight: 12,
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
     fontFamily: "PublicSans-Bold",
+  },
+  nameIcon: {
+    opacity: 0.9,
+    marginTop: 2,
+    marginRight: 12,
   },
   infoRow: {
     flexDirection: "row",
