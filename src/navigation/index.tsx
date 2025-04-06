@@ -10,6 +10,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import AddPetScreen from "../screens/AddPetScreen";
 import PetDetailsScreen from "../screens/PetDetailsScreen";
+import EditPetScreen from "../screens/EditPetScreen";
 import AddRecordScreen from "../screens/AddRecordScreen";
 import EditRecordScreen from "../screens/EditRecordScreen";
 
@@ -37,6 +38,9 @@ const screenOptions = {
         break;
       case "PetDetails":
         title = `${route.params?.pet.name}'s Profile`;
+        break;
+      case "EditPet":
+        title = `Edit ${route.params?.pet.name}'s Profile`;
         break;
     }
 
@@ -76,6 +80,7 @@ export const Navigation = () => {
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
             <Stack.Screen name="AddPet" component={AddPetScreen} />
             <Stack.Screen name="PetDetails" component={PetDetailsScreen} />
+            <Stack.Screen name="EditPet" component={EditPetScreen} />
             <Stack.Screen name="AddRecord" component={AddRecordScreen} />
             <Stack.Screen name="EditRecord" component={EditRecordScreen} />
           </>

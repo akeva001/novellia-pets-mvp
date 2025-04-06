@@ -10,6 +10,7 @@ import {
 import { Text, Button, Icon } from "@rneui/themed";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useAppSelector, useAppDispatch } from "../store";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Pet,
   MedicalRecord,
@@ -17,7 +18,7 @@ import {
   AnimalTypeIcons,
 } from "../types";
 import { setRecords, deleteRecord } from "../store/medicalRecordsSlice";
-import { deletePet } from "../store/petsSlice";
+import { deletePet, setPets } from "../store/petsSlice";
 import { RootStackScreenProps } from "../types/navigation";
 import { commonStyles, customColors, typography } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,30 +27,40 @@ import * as api from "../api/client";
 type Props = RootStackScreenProps<"PetDetails">;
 
 export default function PetDetailsScreen({ route, navigation }: Props) {
-  const { pet } = route.params;
+  const { pet: routePet } = route.params;
   const userId = useAppSelector((state) => state.user.user?.id);
+  const allPets = useAppSelector((state) => state.pets.pets);
   const allRecords = useAppSelector((state) => state.medicalRecords.records);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useAppDispatch();
 
+  // Get the latest pet data from Redux store
+  const pet = useMemo(() => {
+    return allPets.find((p) => p.id === routePet.id) || routePet;
+  }, [allPets, routePet.id]);
+
   const records = useMemo(() => {
     return allRecords.filter((record) => record.petId === pet.id);
   }, [allRecords, pet.id]);
 
-  const fetchRecords = async () => {
+  const fetchPetAndRecords = async () => {
     if (!userId) return;
 
     try {
-      console.log("Fetching records for pet:", pet.id);
-      const fetchedRecords = await api.getRecords(userId, pet.id);
-      console.log("Fetched records:", fetchedRecords);
+      setLoading(true);
+      const [fetchedPets, fetchedRecords] = await Promise.all([
+        api.getPets(userId),
+        api.getRecords(userId, pet.id),
+      ]);
+
+      dispatch(setPets(fetchedPets));
       dispatch(setRecords(fetchedRecords));
     } catch (error) {
-      console.error("Error fetching records:", error);
+      console.error("Error fetching data:", error);
       Alert.alert(
         "Error",
-        error instanceof Error ? error.message : "Failed to fetch records"
+        error instanceof Error ? error.message : "Failed to fetch data"
       );
     } finally {
       setLoading(false);
@@ -57,10 +68,12 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
     }
   };
 
-  useEffect(() => {
-    console.log("Pet details:", pet);
-    fetchRecords();
-  }, [userId, pet.id]);
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPetAndRecords();
+    }, [userId, pet.id])
+  );
 
   const handleDeleteRecord = async (recordId: string) => {
     if (!userId) return;
@@ -121,25 +134,27 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchRecords();
+    fetchPetAndRecords();
   };
 
   const renderRecordCard = ({ item }: { item: MedicalRecord }) => (
-    <TouchableOpacity
-      style={styles.recordCard}
-      onPress={() =>
-        navigation.navigate("EditRecord", { record: item, petId: pet.id })
-      }
-    >
+    <View style={styles.recordCard}>
       <View style={styles.recordContent}>
         <View style={styles.recordHeader}>
           <Text style={styles.recordTitle}>{item.name}</Text>
-          <Icon
-            name="chevron-right"
-            type="material"
-            color={customColors.secondaryText}
-            size={20}
-          />
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() =>
+              navigation.navigate("EditRecord", { record: item, petId: pet.id })
+            }
+          >
+            <Icon
+              name="edit"
+              type="material"
+              size={20}
+              color={customColors.primary}
+            />
+          </TouchableOpacity>
         </View>
         <View style={styles.recordDetails}>
           <Text style={styles.recordText}>Type: {item.type}</Text>
@@ -166,7 +181,7 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   const renderListHeader = () => (
@@ -175,15 +190,26 @@ export default function PetDetailsScreen({ route, navigation }: Props) {
 
       <View style={styles.petInfoCard}>
         <View style={styles.petInfoContent}>
-          <View style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => navigation.navigate("EditPet", { pet })}
+          >
+            <Icon
+              name="edit"
+              type="material"
+              size={20}
+              color={customColors.primary}
+            />
+          </TouchableOpacity>
+
+          <View style={[styles.infoRow, { marginBottom: 10 }]}>
             <FontAwesome5
               name={
                 pet.type === "dog" ? "dog" : pet.type === "cat" ? "cat" : "dove"
               }
-              size={20}
+              size={30}
               color={customColors.primary}
             />
-            <Text style={styles.infoText}>Type: {pet.type || "Unknown"}</Text>
           </View>
           <View style={styles.infoRow}>
             <Icon name="info" color={customColors.primary} size={20} />
@@ -304,6 +330,28 @@ const styles = StyleSheet.create({
   petInfoContent: {
     gap: 12,
   },
+  petInfoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  petInfoTitle: {
+    ...typography.h3,
+    color: customColors.primary,
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(209, 79, 48, 0.1)",
+    width: 40,
+    height: 40,
+    position: "absolute",
+    right: 0,
+    top: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -342,6 +390,7 @@ const styles = StyleSheet.create({
   recordTitle: {
     ...typography.h3,
     color: customColors.primary,
+    flex: 1,
   },
   recordDetails: {
     gap: 8,

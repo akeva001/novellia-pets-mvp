@@ -195,33 +195,23 @@ export default function AddPetScreen({ navigation, route }: Props) {
           />
         )}
 
-        <LinearGradient
-          colors={["#d14f30", "#e85a39"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.submitButtonGradient}
-        >
-          <Button
-            title={existingPet ? "Save Changes" : "Add Pet"}
-            onPress={handleSubmit}
-            containerStyle={styles.submitButton}
-            buttonStyle={{ backgroundColor: "transparent" }}
-            titleStyle={styles.submitButtonText}
-            loading={loading}
-            disabled={loading}
-          />
-        </LinearGradient>
+        <Button
+          title={existingPet ? "Save Changes" : "Add Pet"}
+          onPress={handleSubmit}
+          buttonStyle={styles.submitButton}
+          titleStyle={styles.submitButtonText}
+          loading={loading}
+          disabled={loading}
+          containerStyle={styles.submitButtonContainer}
+        />
 
         {existingPet && (
           <Button
             title="Delete Pet"
             onPress={handleDelete}
-            containerStyle={[
-              styles.buttonContainer,
-              styles.deleteButtonContainer,
-            ]}
             buttonStyle={styles.deleteButton}
             titleStyle={styles.deleteButtonText}
+            containerStyle={styles.deleteButtonContainer}
           />
         )}
       </View>
@@ -354,33 +344,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: customColors.text,
   },
-  submitButtonGradient: {
+  submitButton: {
+    backgroundColor: customColors.buttonPrimary,
+    paddingVertical: 14,
     borderRadius: 12,
+  },
+  submitButtonContainer: {
     marginTop: 24,
     marginBottom: 16,
-    overflow: "hidden",
-  },
-  buttonContainer: {
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  submitButton: {
-    backgroundColor: "transparent",
-    paddingVertical: 14,
-  },
-  deleteButtonContainer: {
-    marginTop: 8,
-  },
-  deleteButton: {
-    backgroundColor: "rgba(220, 38, 38, 0.1)",
-    paddingVertical: 14,
   },
   submitButtonText: {
     ...typography.button,
     color: "white",
+    fontSize: 17,
+  },
+  deleteButton: {
+    backgroundColor: "rgba(220, 38, 38, 0.1)",
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   deleteButtonText: {
     ...typography.button,
     color: customColors.error,
+  },
+  deleteButtonContainer: {
+    marginTop: 8,
   },
 });

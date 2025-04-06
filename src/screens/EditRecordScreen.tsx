@@ -174,9 +174,20 @@ export default function EditRecordScreen({ navigation, route }: Props) {
     );
   };
 
+  const toggleReaction = (reaction: AllergyReaction) => {
+    const currentReactions = reactions
+      .split(",")
+      .map((r) => r.trim())
+      .filter(Boolean);
+    const updatedReactions = currentReactions.includes(reaction)
+      ? currentReactions.filter((r) => r !== reaction)
+      : [...currentReactions, reaction];
+    setReactions(updatedReactions.join(", "));
+  };
+
   return (
     <ScrollView style={[commonStyles.container, styles.container]}>
-      <Text style={styles.screenTitle}>
+      <Text h3 style={styles.title}>
         Edit {record.type.charAt(0).toUpperCase() + record.type.slice(1)}
       </Text>
 
@@ -219,16 +230,28 @@ export default function EditRecordScreen({ navigation, route }: Props) {
 
         {record.type === "allergy" && (
           <>
-            <Input
-              label="Reactions"
-              value={reactions}
-              onChangeText={setReactions}
-              placeholder="Enter reactions (rash, swelling, breathing, other)"
-              inputStyle={styles.inputText}
-              inputContainerStyle={styles.inputContainer}
-              labelStyle={styles.label}
-              placeholderTextColor={customColors.secondaryText}
-            />
+            <Text style={[styles.label, { marginLeft: 10 }]}>Reactions</Text>
+            <View style={styles.reactionsContainer}>
+              {["rash", "swelling", "breathing", "other"].map((reaction) => (
+                <Button
+                  key={reaction}
+                  title={reaction}
+                  type={reactions.includes(reaction) ? "solid" : "outline"}
+                  onPress={() => toggleReaction(reaction as AllergyReaction)}
+                  containerStyle={styles.reactionButton}
+                  buttonStyle={
+                    reactions.includes(reaction)
+                      ? styles.selectedReactionButton
+                      : styles.outlineButton
+                  }
+                  titleStyle={
+                    reactions.includes(reaction)
+                      ? styles.selectedButtonText
+                      : styles.outlineButtonText
+                  }
+                />
+              ))}
+            </View>
             <ButtonGroup
               buttons={["Mild", "Severe"]}
               selectedIndex={["mild", "severe"].indexOf(severity)}
@@ -273,7 +296,15 @@ export default function EditRecordScreen({ navigation, route }: Props) {
           </>
         )}
 
-        <View style={styles.buttonContainer}>
+        <View style={styles.bottomActions}>
+          <Button
+            title="Delete Record"
+            onPress={handleDelete}
+            buttonStyle={styles.deleteButton}
+            titleStyle={styles.deleteButtonText}
+            disabled={loading}
+          />
+
           <LinearGradient
             colors={["#d14f30", "#e85a39"]}
             start={{ x: 0, y: 0 }}
@@ -283,20 +314,12 @@ export default function EditRecordScreen({ navigation, route }: Props) {
             <Button
               title="Save Changes"
               onPress={handleSubmit}
-              buttonStyle={{ backgroundColor: "transparent" }}
+              buttonStyle={styles.submitButton}
               titleStyle={styles.submitButtonText}
               loading={loading}
               disabled={loading}
             />
           </LinearGradient>
-
-          <Button
-            title="Delete Record"
-            onPress={handleDelete}
-            buttonStyle={styles.deleteButton}
-            titleStyle={styles.deleteButtonText}
-            disabled={loading}
-          />
         </View>
       </View>
     </ScrollView>
@@ -305,17 +328,17 @@ export default function EditRecordScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
+    paddingHorizontal: 0,
   },
-  screenTitle: {
-    ...typography.title,
+  title: {
+    ...typography.h2,
     color: customColors.primary,
-    marginTop: 20,
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    textAlign: "center",
+    marginVertical: 20,
   },
   form: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
   inputContainer: {
     borderBottomWidth: 0,
@@ -361,36 +384,47 @@ const styles = StyleSheet.create({
     color: customColors.primary,
     marginBottom: 8,
   },
-  buttonContainer: {
-    gap: 12,
-    marginTop: 24,
-    marginBottom: 32,
+  reactionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    marginHorizontal: 10,
   },
-  saveButtonGradient: {
+  reactionButton: {
+    width: "48%",
+    marginBottom: 12,
     borderRadius: 12,
-    overflow: "hidden",
   },
-  submitButtonText: {
-    ...typography.button,
-    color: "white",
-  },
-  deleteButton: {
-    backgroundColor: "rgba(220, 38, 38, 0.15)",
-    paddingVertical: 14,
+  selectedReactionButton: {
+    backgroundColor: customColors.buttonPrimary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    height: 48,
     borderRadius: 12,
+  },
+  outlineButton: {
+    backgroundColor: "white",
+    borderColor: customColors.border,
     borderWidth: 1,
-    borderColor: "rgba(220, 38, 38, 0.2)",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    height: 48,
+    borderRadius: 12,
   },
-  deleteButtonText: {
+  outlineButtonText: {
     ...typography.button,
-    color: customColors.error,
+    color: customColors.text,
+    fontSize: 16,
+    textAlign: "center",
   },
   severityGroup: {
-    marginTop: 16,
-    marginBottom: 24,
+    marginBottom: 20,
+    borderRadius: 8,
+    borderColor: customColors.border,
   },
   selectedButton: {
-    backgroundColor: customColors.primary,
+    backgroundColor: customColors.buttonPrimary,
   },
   buttonText: {
     ...typography.body1,
@@ -399,11 +433,46 @@ const styles = StyleSheet.create({
   selectedButtonText: {
     ...typography.button,
     color: "white",
+    fontSize: 16,
+    textAlign: "center",
   },
   multilineInput: {
     height: 100,
+    textAlignVertical: "top",
+    paddingTop: 12,
   },
   multilineContainer: {
-    paddingVertical: 16,
+    height: 100,
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+  },
+  bottomActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 32,
+  },
+  saveButtonGradient: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  submitButton: {
+    backgroundColor: "transparent",
+    paddingVertical: 14,
+  },
+  submitButtonText: {
+    ...typography.button,
+    color: "white",
+    fontSize: 17,
+  },
+  deleteButton: {
+    backgroundColor: "rgba(220, 38, 38, 0.1)",
+    paddingVertical: 14,
+    flex: 1,
+    borderRadius: 12,
+  },
+  deleteButtonText: {
+    ...typography.button,
+    color: customColors.error,
   },
 });

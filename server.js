@@ -166,16 +166,39 @@ app.get("/pets", authenticateUser, (req, res) => {
 app.put("/pets/:id", authenticateUser, (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log("Updating pet:", id);
+    const { name, type, breed, dateOfBirth } = req.body;
     const pet = db.pets.get(id);
 
     if (!pet || pet.userId !== req.user.id) {
       return res.status(404).json({ error: "Pet not found" });
     }
 
-    const updatedPet = { ...pet, ...req.body };
+    // Validate required fields
+    if (!name || !type || !breed || !dateOfBirth) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Validate pet type
+    const validTypes = ["dog", "cat", "bird"];
+    if (!validTypes.includes(type)) {
+      return res
+        .status(400)
+        .json({ error: "Invalid pet type. Must be one of: dog, cat, bird" });
+    }
+
+    const updatedPet = {
+      ...pet,
+      ...req.body,
+      updatedAt: new Date().toISOString(),
+    };
+
     db.pets.set(id, updatedPet);
+    console.log("Updated pet:", updatedPet);
     res.json(updatedPet);
   } catch (error) {
+    console.error("Error updating pet:", error);
     res.status(500).json({ error: "Failed to update pet" });
   }
 });

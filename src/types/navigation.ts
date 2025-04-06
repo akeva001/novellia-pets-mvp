@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   AddPet: { pet?: Pet };
   PetDetails: { pet: Pet };
+  EditPet: { pet: Pet };
   AddRecord: { petId: string };
   EditRecord: { record: MedicalRecord; petId: string };
   MainTabs: NavigatorScreenParams<TabParamList>;
