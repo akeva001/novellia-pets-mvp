@@ -10,8 +10,8 @@ A React Native mobile application for managing pet medical records, built as a t
   - Allergies with reactions and severity
   - Lab results with dosage and instructions
 - Document attachments support for medical records
-- Intuitive UI with gradient buttons and animated dropdowns
-- Secure user authentication
+- Intuitive UI
+- Simple user authentication
 
 ## Quick Start
 
